@@ -2,14 +2,16 @@ import { r as __toESM } from "../_runtime.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { v as Link } from "../_libs/@tanstack/react-router+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-import { a as Star, d as LoaderCircle, f as Languages, i as Trash2, l as Plus, o as Search, p as ChevronDown, s as RotateCcw, t as X, u as Pencil } from "../_libs/lucide-react.mjs";
+import { a as Star, d as LoaderCircle, i as Trash2, l as Plus, m as ChevronDown, o as Search, p as Languages, s as RotateCcw, t as X, u as Pencil } from "../_libs/lucide-react.mjs";
 import { a as DialogOverlay$1, i as DialogDescription$1, n as DialogClose, o as DialogPortal$1, r as DialogContent$1, s as DialogTitle$1, t as Dialog$1 } from "../_libs/@radix-ui/react-dialog+[...].mjs";
 import { n as toast } from "../_libs/sonner.mjs";
-import { d as isDue, f as reviewLabel, n as useWordStore, p as cn, s as canonicalizePos } from "./router-ugn03xlr.mjs";
-import { a as SpeakButton, i as PosPicker, n as Button, r as PosBadge, t as Badge } from "./speak-button-CwCVNvPz.mjs";
-import { n as SelectCircle, t as Input } from "./select-circle-DSGlPFSi.mjs";
-import { n as lookupPhrase, t as Textarea } from "./lookup-e3FZE4tM.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-BaFgtTfm.js
+import { c as canonicalizePos, f as isDue, m as cn, n as useWordStore, p as reviewLabel } from "./router-C0Aafbcp.mjs";
+import { i as PosPicker, n as Button, r as PosBadge, t as Badge } from "./pos-CHniOR3Y.mjs";
+import { t as Textarea } from "./textarea-Co25t2iR.mjs";
+import { n as SelectCircle, t as Input } from "./select-circle-BNK5VyaL.mjs";
+import { t as SpeakButton } from "./speak-button-CkUCZ3dc.mjs";
+import { t as lookupPhrase } from "./lookup-CNHju-oU.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-F5TVTnet.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var Dialog = Dialog$1;
@@ -111,10 +113,25 @@ function AddWordDialog({ open, onOpenChange, editing, preset }) {
 		}
 		setLooking(true);
 		try {
-			const result = await lookupPhrase({ data: {
-				text,
-				hint: detectHint(draft.en, draft.zh)
-			} });
+			const result = await lookupPhrase({
+				data: {
+					text,
+					hint: detectHint(draft.en, draft.zh)
+				},
+				onPartial: (partial) => {
+					const isEnSource = partial.sourceLang === "en";
+					setDraft((d) => ({
+						...d,
+						en: isEnSource ? partial.source : partial.translation,
+						zh: isEnSource ? partial.translation : partial.source,
+						phonetic: partial.phonetic || d.phonetic,
+						pos: canonicalizePos(partial.pos) || d.pos,
+						exampleEn: partial.examples[0]?.en || d.exampleEn,
+						exampleZh: partial.examples[0]?.zh || d.exampleZh
+					}));
+					setLooking(false);
+				}
+			});
 			if (!result.ok) {
 				toast.error(result.error);
 				return;
@@ -282,6 +299,7 @@ function QuickAdd({ onManual }) {
 	const [text, setText] = (0, import_react.useState)("");
 	const [loading, setLoading] = (0, import_react.useState)(false);
 	const addWord = useWordStore((s) => s.addWord);
+	const updateWord = useWordStore((s) => s.updateWord);
 	async function translateAndAdd() {
 		const value = text.trim();
 		if (!value) {
@@ -290,27 +308,41 @@ function QuickAdd({ onManual }) {
 		}
 		setLoading(true);
 		try {
-			const result = await lookupPhrase({ data: {
-				text: value,
-				hint: hasCjk(value) ? "zh" : "en"
-			} });
+			let savedId = null;
+			const result = await lookupPhrase({
+				data: {
+					text: value,
+					hint: hasCjk(value) ? "zh" : "en"
+				},
+				onPartial: (partial) => {
+					const isEn = partial.sourceLang === "en";
+					const payload = {
+						en: isEn ? partial.source : partial.translation,
+						zh: isEn ? partial.translation : partial.source,
+						phonetic: partial.phonetic,
+						pos: partial.pos,
+						exampleEn: partial.examples[0]?.en,
+						exampleZh: partial.examples[0]?.zh,
+						source: "translate"
+					};
+					if (!savedId) {
+						const { word, duplicated } = addWord(payload);
+						savedId = word.id;
+						toast(duplicated ? `「${word.en}」已在單字本中` : `已加入 ${word.en} · ${word.zh}`);
+						setText("");
+						setLoading(false);
+					} else updateWord(savedId, {
+						phonetic: payload.phonetic,
+						pos: payload.pos,
+						exampleEn: payload.exampleEn,
+						exampleZh: payload.exampleZh
+					});
+				}
+			});
 			if (!result.ok) {
 				toast.error(result.error);
 				onManual(value);
-				return;
 			}
-			const isEn = result.sourceLang === "en";
-			const { word, duplicated } = addWord({
-				en: isEn ? result.source : result.translation,
-				zh: isEn ? result.translation : result.source,
-				phonetic: result.phonetic,
-				pos: result.pos,
-				exampleEn: result.examples[0]?.en,
-				exampleZh: result.examples[0]?.zh,
-				source: "translate"
-			});
-			toast(duplicated ? `「${word.en}」已在單字本中` : `已加入 ${word.en} · ${word.zh}`);
-			setText("");
 		} catch {
 			toast.error("翻譯失敗，改為手動新增");
 			onManual(value);
@@ -389,6 +421,13 @@ function WordList({ query, onEdit }) {
 	const visibleIds = filtered.map((w) => w.id);
 	const visibleSelected = visibleIds.filter((id) => selectedSet.has(id)).length;
 	const allVisibleSelected = visibleIds.length > 0 && visibleSelected === visibleIds.length;
+	function pick(id) {
+		return (e) => {
+			if (e.pointerType === "mouse" && e.button !== 0) return;
+			e.preventDefault();
+			toggleSelected(id);
+		};
+	}
 	const chips = [
 		{
 			id: "all",
@@ -412,7 +451,7 @@ function WordList({ query, onEdit }) {
 		}
 	];
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("section", {
-		className: cn("mt-6", selectedIds.length > 0 && "pb-24"),
+		className: cn("mt-6", selectedIds.length > 0 && "pb-32"),
 		children: [
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 				className: "flex flex-wrap items-center gap-2",
@@ -445,19 +484,22 @@ function WordList({ query, onEdit }) {
 						className: cn("rounded-xl bg-surface shadow-card transition-[box-shadow,background-color] duration-150", open && "shadow-card-hover", picked && "bg-accent-soft/55"),
 						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 							className: "flex items-stretch",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
-								type: "button",
-								"aria-pressed": picked,
-								"aria-label": picked ? `取消圈選 ${word.en}` : `圈選 ${word.en}`,
-								onClick: () => toggleSelected(word.id),
-								className: "flex min-w-0 flex-1 items-center gap-1 py-3 pl-1.5 pr-1 text-left",
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectCircle, {
-									selected: picked,
-									className: "mx-2 shrink-0"
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
-									className: "min-w-0 flex-1",
+							children: [
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+									type: "button",
+									"aria-pressed": picked,
+									"aria-label": picked ? `取消圈選 ${word.en}` : `圈選 ${word.en}`,
+									onPointerDown: pick(word.id),
+									className: "flex w-14 shrink-0 items-center justify-center self-stretch rounded-l-xl active:bg-accent-soft/80",
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectCircle, { selected: picked })
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+									type: "button",
+									"aria-pressed": picked,
+									onPointerDown: pick(word.id),
+									className: "flex min-w-0 flex-1 items-center py-3 pr-1 text-left select-none active:bg-accent-soft/40",
 									children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
-										className: "flex items-start justify-between gap-3",
+										className: "flex w-full min-w-0 items-start justify-between gap-3",
 										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 											className: "min-w-0",
 											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
@@ -472,32 +514,33 @@ function WordList({ query, onEdit }) {
 											})]
 										}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Mastery, { ease: word.ease })]
 									})
-								})]
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-								className: "flex items-start gap-0.5 py-2 pr-2",
-								children: [
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-										type: "button",
-										variant: "ghost",
-										size: "icon-sm",
-										"aria-label": open ? "收合詳情" : "展開詳情",
-										"aria-expanded": open,
-										className: "text-muted",
-										onClick: () => setOpenId(open ? null : word.id),
-										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChevronDown, { className: cn("size-4 transition-transform duration-150 ease-out-soft", open && "rotate-180") })
-									}),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SpeakButton, { text: word.en }),
-									/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-										type: "button",
-										variant: "ghost",
-										size: "icon-sm",
-										"aria-label": word.starred ? "取消收藏" : "收藏",
-										className: word.starred ? "text-accent" : "text-muted",
-										onClick: () => toggleStar(word.id),
-										children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Star, { className: cn("size-4", word.starred && "fill-current") })
-									})
-								]
-							})]
+								}),
+								/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+									className: "flex items-start gap-0.5 py-2 pr-2",
+									children: [
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+											type: "button",
+											variant: "ghost",
+											size: "icon-sm",
+											"aria-label": open ? "收合詳情" : "展開詳情",
+											"aria-expanded": open,
+											className: "text-muted",
+											onClick: () => setOpenId(open ? null : word.id),
+											children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ChevronDown, { className: cn("size-4 transition-transform duration-150 ease-out-soft", open && "rotate-180") })
+										}),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SpeakButton, { text: word.en }),
+										/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+											type: "button",
+											variant: "ghost",
+											size: "icon-sm",
+											"aria-label": word.starred ? "取消收藏" : "收藏",
+											className: word.starred ? "text-accent" : "text-muted",
+											onClick: () => toggleStar(word.id),
+											children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Star, { className: cn("size-4", word.starred && "fill-current") })
+										})
+									]
+								})
+							]
 						}), open ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 							className: "space-y-3 border-t border-line px-4 py-3.5",
 							children: [
@@ -557,7 +600,7 @@ function WordList({ query, onEdit }) {
 			selectedIds.length > 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 				className: "pointer-events-none fixed inset-x-0 bottom-24 z-40 px-4 md:bottom-6 md:left-56",
 				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-					className: "pointer-events-auto mx-auto flex max-w-3xl items-center gap-3 rounded-xl bg-ink px-3 py-2.5 text-accent-fg shadow-card-hover",
+					className: "mx-auto flex max-w-3xl items-center gap-3 rounded-xl bg-ink/95 px-3 py-2.5 text-accent-fg shadow-card-hover",
 					children: [
 						/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
 							className: "min-w-0 flex-1 text-sm font-medium",
@@ -576,14 +619,14 @@ function WordList({ query, onEdit }) {
 							type: "button",
 							variant: "ghost",
 							size: "sm",
-							className: "text-accent-fg/80 hover:bg-accent-fg/10 hover:text-accent-fg",
+							className: "pointer-events-auto text-accent-fg/80 hover:bg-accent-fg/10 hover:text-accent-fg",
 							onClick: clearSelected,
 							children: "清除"
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
 							asChild: true,
 							size: "sm",
-							className: "bg-accent-fg text-ink hover:bg-accent-fg/90",
+							className: "pointer-events-auto bg-accent-fg text-ink hover:bg-accent-fg/90",
 							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link, {
 								to: "/practice",
 								children: "考這些"
@@ -687,6 +730,19 @@ function Home() {
 			}) : null]
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(QuickAdd, { onManual: openManual }),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("p", {
+			className: "mt-2 text-sm text-muted",
+			children: [
+				"要一次貼很多？到",
+				" ",
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link, {
+					to: "/add",
+					className: "text-accent underline-offset-2 hover:underline",
+					children: "速加"
+				}),
+				"，用 (n) (v) 標詞性。"
+			]
+		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 			className: "relative mt-4",
 			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Search, { className: "pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-faint" }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Input, {

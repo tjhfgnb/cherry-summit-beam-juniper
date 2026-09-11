@@ -171,6 +171,34 @@ var Languages = createLucideIcon("languages", [
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
+var ListPlus = createLucideIcon("list-plus", [
+	["path", {
+		d: "M11 12H3",
+		key: "51ecnj"
+	}],
+	["path", {
+		d: "M16 6H3",
+		key: "1wxfjs"
+	}],
+	["path", {
+		d: "M16 18H3",
+		key: "12xzn7"
+	}],
+	["path", {
+		d: "M18 9v6",
+		key: "1twb98"
+	}],
+	["path", {
+		d: "M21 12h-6",
+		key: "bt1uis"
+	}]
+]);
+/**
+* @license lucide-react v0.510.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
 var LoaderCircle = createLucideIcon("loader-circle", [["path", {
 	d: "M21 12a9 9 0 1 1-6.219-8.56",
 	key: "13zald"
@@ -351,4 +379,4 @@ var X = createLucideIcon("x", [["path", {
 	key: "d8bk6v"
 }]]);
 //#endregion
-export { Star as a, Repeat as c, LoaderCircle as d, Languages as f, ArrowRightLeft as g, BookOpen as h, Trash2 as i, Plus as l, Check as m, Volume2 as n, Search as o, ChevronDown as p, TriangleAlert as r, RotateCcw as s, X as t, Pencil as u };
+export { ArrowRightLeft as _, Star as a, Repeat as c, LoaderCircle as d, ListPlus as f, BookOpen as g, Check as h, Trash2 as i, Plus as l, ChevronDown as m, Volume2 as n, Search as o, Languages as p, TriangleAlert as r, RotateCcw as s, X as t, Pencil as u };

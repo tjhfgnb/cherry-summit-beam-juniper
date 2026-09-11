@@ -1,11 +1,12 @@
 import { r as __toESM } from "../_runtime.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-import { m as Check, o as Search, s as RotateCcw, t as X } from "../_libs/lucide-react.mjs";
-import { d as isDue, i as ZH_DISTRACTORS, n as useWordStore, p as cn, r as EN_DISTRACTORS } from "./router-ugn03xlr.mjs";
-import { a as SpeakButton, n as Button, r as PosBadge } from "./speak-button-CwCVNvPz.mjs";
-import { n as SelectCircle, t as Input } from "./select-circle-DSGlPFSi.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/practice-Byw5FDu3.js
+import { h as Check, o as Search, s as RotateCcw, t as X } from "../_libs/lucide-react.mjs";
+import { f as isDue, i as ZH_DISTRACTORS, m as cn, n as useWordStore, r as EN_DISTRACTORS } from "./router-C0Aafbcp.mjs";
+import { n as Button, r as PosBadge } from "./pos-CHniOR3Y.mjs";
+import { n as SelectCircle, t as Input } from "./select-circle-BNK5VyaL.mjs";
+import { t as SpeakButton } from "./speak-button-CkUCZ3dc.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/practice-CGC_4lA3.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 function WordPicker({ words, selectedIds, onToggle, onSelectVisible, onClear }) {
@@ -74,8 +75,12 @@ function WordPicker({ words, selectedIds, onToggle, onSelectVisible, onClear }) 
 						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("button", {
 							type: "button",
 							"aria-pressed": picked,
-							onClick: () => onToggle(word.id),
-							className: cn("flex min-h-12 w-full items-center gap-3 px-3 py-2 text-left transition-colors duration-150", picked ? "bg-accent-soft/60" : "hover:bg-bg-warm"),
+							onPointerDown: (e) => {
+								if (e.pointerType === "mouse" && e.button !== 0) return;
+								e.preventDefault();
+								onToggle(word.id);
+							},
+							className: cn("flex min-h-12 w-full items-center gap-3 px-3 py-2 text-left select-none transition-colors duration-100", picked ? "bg-accent-soft/60" : "hover:bg-bg-warm"),
 							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectCircle, { selected: picked }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", {
 								className: "min-w-0 flex-1",
 								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {

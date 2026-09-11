@@ -2,13 +2,13 @@ import { r as __toESM } from "../_runtime.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { _ as createRootRoute, d as useRouterState, g as createFileRoute, h as lazyRouteComponent, l as Scripts, m as Outlet, p as createRouter, u as HeadContent, v as Link, y as useRouter } from "../_libs/@tanstack/react-router+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-import { c as Repeat, f as Languages, h as BookOpen, r as TriangleAlert } from "../_libs/lucide-react.mjs";
+import { c as Repeat, f as ListPlus, g as BookOpen, p as Languages, r as TriangleAlert } from "../_libs/lucide-react.mjs";
 import { a as union, i as string, n as number, r as object, t as literal } from "../_libs/zod.mjs";
 import { t as Toaster } from "../_libs/sonner.mjs";
 import { n as clsx } from "../_libs/class-variance-authority+clsx.mjs";
 import { t as twMerge } from "../_libs/tailwind-merge.mjs";
 import { n as persist, r as create, t as createJSONStorage } from "../_libs/zustand.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/router-ugn03xlr.js
+//#region node_modules/.nitro/vite/services/ssr/assets/router-C0Aafbcp.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var __defProp = Object.defineProperty;
@@ -564,6 +564,119 @@ function togglePosKey(raw, key) {
 	const keys = parsePos(raw);
 	return formatPos(keys.includes(key) ? keys.filter((item) => item !== key) : [...keys, key]);
 }
+function uniquePos(keys) {
+	const out = [];
+	for (const key of keys) if (!out.includes(key)) out.push(key);
+	return out;
+}
+function mergeGloss(a, b) {
+	const parts = [...a.split(/[／/、;；,，]+/), ...b.split(/[／/、;；,，]+/)].map((s) => s.trim()).filter(Boolean);
+	const out = [];
+	for (const part of parts) if (!out.includes(part)) out.push(part);
+	return out.join("／");
+}
+function normalizeEn$1(value) {
+	return value.trim().replace(/\s+/g, " ");
+}
+function pullPos(line) {
+	const keys = [];
+	return {
+		rest: line.replace(/[（(]([^）)]*)[）)]/g, (_, inner) => {
+			const found = parsePos(String(inner));
+			if (found.length) {
+				keys.push(...found);
+				return " ";
+			}
+			return `(${inner})`;
+		}).replace(/\s+/g, " ").trim(),
+		keys: uniquePos(keys)
+	};
+}
+function splitEnZh(rest) {
+	const idx = rest.search(/[\u3400-\u9fff]/);
+	if (idx === 0) {
+		const split = rest.search(/[A-Za-z]/);
+		if (split === -1) return {
+			en: "",
+			zh: rest.trim()
+		};
+		return {
+			zh: rest.slice(0, split).trim(),
+			en: rest.slice(split).trim()
+		};
+	}
+	if (idx > 0) return {
+		en: rest.slice(0, idx).trim(),
+		zh: rest.slice(idx).trim()
+	};
+	const parts = rest.split(/\t+| {2,}|[|｜]+/);
+	if (parts.length >= 2) return {
+		en: parts[0].trim(),
+		zh: parts.slice(1).join(" ").trim()
+	};
+	return {
+		en: rest.trim(),
+		zh: ""
+	};
+}
+function parseBulkText(raw) {
+	const groups = /* @__PURE__ */ new Map();
+	const skipped = [];
+	for (const original of raw.split(/\r?\n/)) {
+		const line = original.trim();
+		if (!line || line.startsWith("#") || line.startsWith("//")) continue;
+		const { rest, keys } = pullPos(line);
+		if (!rest) {
+			skipped.push({
+				line,
+				reason: "這行只有詞性，沒有單字"
+			});
+			continue;
+		}
+		const split = splitEnZh(rest);
+		const en = normalizeEn$1(split.en.replace(/^[-•·\d.)、]+\s*/, ""));
+		const zh = split.zh.replace(/[。．.]+$/, "").trim();
+		if (!en) {
+			skipped.push({
+				line,
+				reason: "找不到英文"
+			});
+			continue;
+		}
+		if (!/[A-Za-z]/.test(en)) {
+			skipped.push({
+				line,
+				reason: "找不到英文"
+			});
+			continue;
+		}
+		if (!zh) {
+			skipped.push({
+				line,
+				reason: "找不到中文"
+			});
+			continue;
+		}
+		const key = en.toLowerCase();
+		const prev = groups.get(key);
+		if (prev) {
+			prev.zh = mergeGloss(prev.zh, zh);
+			prev.posKeys = uniquePos([...prev.posKeys, ...keys]);
+			prev.pos = formatPos(prev.posKeys);
+			prev.count += 1;
+		} else groups.set(key, {
+			en,
+			zh,
+			posKeys: keys,
+			pos: formatPos(keys),
+			count: 1
+		});
+	}
+	return {
+		groups: [...groups.values()],
+		skipped
+	};
+}
 var SEED = [
 	{
 		en: "opportunity",
@@ -812,11 +925,11 @@ var useWordStore = create()(persist((set, get) => ({
 		const existing = get().words.find((w) => w.en.toLowerCase() === en.toLowerCase());
 		if (existing) {
 			const patch = { updatedAt: Date.now() };
-			if (zh && zh !== existing.zh) patch.zh = zh;
+			if (zh) patch.zh = mergeGloss(existing.zh, zh);
 			if (input.phonetic && !existing.phonetic) patch.phonetic = input.phonetic;
 			if (input.exampleEn && !existing.exampleEn) patch.exampleEn = input.exampleEn;
 			if (input.exampleZh && !existing.exampleZh) patch.exampleZh = input.exampleZh;
-			if (input.pos && !existing.pos) patch.pos = canonicalizePos(input.pos);
+			if (input.pos) patch.pos = formatPos([...parsePos(existing.pos), ...parsePos(input.pos)]);
 			get().updateWord(existing.id, patch);
 			return {
 				word: get().words.find((w) => w.id === existing.id) ?? existing,
@@ -849,6 +962,66 @@ var useWordStore = create()(persist((set, get) => ({
 		return {
 			word,
 			duplicated: false
+		};
+	},
+	importMany: (items) => {
+		const ids = [];
+		let added = 0;
+		let merged = 0;
+		let words = get().words;
+		for (const input of items) {
+			const en = normalizeEn(input.en);
+			const zh = input.zh.trim();
+			if (!en || !zh) continue;
+			const existing = words.find((w) => w.en.toLowerCase() === en.toLowerCase());
+			if (existing) {
+				words = words.map((w) => w.id === existing.id ? {
+					...w,
+					zh: mergeGloss(w.zh, zh),
+					pos: formatPos([...parsePos(w.pos), ...parsePos(input.pos ?? "")]),
+					phonetic: w.phonetic || input.phonetic?.trim() || "",
+					exampleEn: w.exampleEn || input.exampleEn?.trim() || "",
+					exampleZh: w.exampleZh || input.exampleZh?.trim() || "",
+					updatedAt: Date.now()
+				} : w);
+				ids.push(existing.id);
+				merged += 1;
+			} else {
+				const now = Date.now();
+				const word = {
+					id: makeId(),
+					en,
+					zh,
+					phonetic: input.phonetic?.trim() ?? "",
+					pos: canonicalizePos(input.pos ?? ""),
+					exampleEn: input.exampleEn?.trim() ?? "",
+					exampleZh: input.exampleZh?.trim() ?? "",
+					note: input.note?.trim() ?? "",
+					tags: input.tags ?? [],
+					starred: false,
+					ease: 0,
+					intervalDays: 0,
+					nextReviewAt: 0,
+					reviewCount: 0,
+					correctCount: 0,
+					wrongCount: 0,
+					createdAt: now,
+					updatedAt: now,
+					source: input.source ?? "manual"
+				};
+				words = [word, ...words];
+				ids.push(word.id);
+				added += 1;
+			}
+		}
+		set((s) => ({
+			words,
+			selectedIds: [.../* @__PURE__ */ new Set([...ids, ...s.selectedIds])]
+		}));
+		return {
+			added,
+			merged,
+			ids
 		};
 	},
 	updateWord: (id, patch) => {
@@ -926,15 +1099,27 @@ var useWordStore = create()(persist((set, get) => ({
 	storage: createJSONStorage(() => typeof window === "undefined" ? memoryStorage : localStorage),
 	partialize: (s) => ({
 		words: s.words,
-		stats: s.stats,
-		selectedIds: s.selectedIds
-	})
+		stats: s.stats
+	}),
+	merge: (persisted, current) => {
+		const p = persisted ?? {};
+		return {
+			...current,
+			...p,
+			selectedIds: current.selectedIds
+		};
+	}
 }));
 var NAV = [
 	{
 		to: "/",
 		label: "單字本",
 		icon: BookOpen
+	},
+	{
+		to: "/add",
+		label: "速加",
+		icon: ListPlus
 	},
 	{
 		to: "/translate",
@@ -1028,7 +1213,7 @@ function AppShell({ children }) {
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("nav", {
 				className: "fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm md:hidden",
 				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
-					className: "mx-auto grid max-w-lg grid-cols-3",
+					className: "mx-auto grid max-w-lg grid-cols-4",
 					children: NAV.map((item) => {
 						const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
 						const Icon = item.icon;
@@ -1054,9 +1239,9 @@ function AppShell({ children }) {
 		]
 	});
 }
-var styles_default = "/assets/styles-CT7N0ZLZ.css";
+var styles_default = "/assets/styles-BIVU-GxW.css";
 var APP_NAME = "英習本 Wordbook";
-var Route$3 = createRootRoute({
+var Route$4 = createRootRoute({
 	head: () => ({
 		meta: [
 			{ charSet: "utf-8" },
@@ -1120,30 +1305,37 @@ var Route$3 = createRootRoute({
 		})]
 	})
 });
-var $$splitComponentImporter$2 = () => import("./routes-BaFgtTfm.mjs");
-var Route$2 = createFileRoute("/")({ component: lazyRouteComponent($$splitComponentImporter$2, "component") });
-var $$splitComponentImporter$1 = () => import("./practice-Byw5FDu3.mjs");
+var $$splitComponentImporter$3 = () => import("./routes-F5TVTnet.mjs");
+var Route$3 = createFileRoute("/")({ component: lazyRouteComponent($$splitComponentImporter$3, "component") });
+var $$splitComponentImporter$2 = () => import("./add-CbIS1OcQ.mjs");
+var Route$2 = createFileRoute("/add")({ component: lazyRouteComponent($$splitComponentImporter$2, "component") });
+var $$splitComponentImporter$1 = () => import("./practice-CGC_4lA3.mjs");
 var Route$1 = createFileRoute("/practice")({ component: lazyRouteComponent($$splitComponentImporter$1, "component") });
-var $$splitComponentImporter = () => import("./translate-WAXqVw5c.mjs");
+var $$splitComponentImporter = () => import("./translate-D8JjQY7R.mjs");
 var Route = createFileRoute("/translate")({ component: lazyRouteComponent($$splitComponentImporter, "component") });
 var rootRouteChildren = {
-	IndexRoute: Route$2.update({
+	IndexRoute: Route$3.update({
 		id: "/",
 		path: "/",
-		getParentRoute: () => Route$3
+		getParentRoute: () => Route$4
+	}),
+	AddRoute: Route$2.update({
+		id: "/add",
+		path: "/add",
+		getParentRoute: () => Route$4
 	}),
 	PracticeRoute: Route$1.update({
 		id: "/practice",
 		path: "/practice",
-		getParentRoute: () => Route$3
+		getParentRoute: () => Route$4
 	}),
 	TranslateRoute: Route.update({
 		id: "/translate",
 		path: "/translate",
-		getParentRoute: () => Route$3
+		getParentRoute: () => Route$4
 	})
 };
-var routeTree = Route$3._addFileChildren(rootRouteChildren)._addFileTypes();
+var routeTree = Route$4._addFileChildren(rootRouteChildren)._addFileTypes();
 var router_exports = /* @__PURE__ */ __exportAll({ getRouter: () => getRouter });
 function getRouter() {
 	return createRouter({
@@ -1152,4 +1344,4 @@ function getRouter() {
 	});
 }
 //#endregion
-export { POS_BY_KEY as a, formatPos as c, isDue as d, reviewLabel as f, ZH_DISTRACTORS as i, parsePos as l, useWordStore as n, POS_OPTIONS as o, cn as p, EN_DISTRACTORS as r, canonicalizePos as s, router_exports as t, togglePosKey as u };
+export { parseBulkText as a, canonicalizePos as c, togglePosKey as d, isDue as f, ZH_DISTRACTORS as i, formatPos as l, cn as m, useWordStore as n, POS_BY_KEY as o, reviewLabel as p, EN_DISTRACTORS as r, POS_OPTIONS as s, router_exports as t, parsePos as u };

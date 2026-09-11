@@ -1,12 +1,14 @@
 import { r as __toESM } from "../_runtime.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-import { d as LoaderCircle, f as Languages, g as ArrowRightLeft, l as Plus } from "../_libs/lucide-react.mjs";
+import { _ as ArrowRightLeft, d as LoaderCircle, l as Plus, p as Languages } from "../_libs/lucide-react.mjs";
 import { n as toast } from "../_libs/sonner.mjs";
-import { n as useWordStore } from "./router-ugn03xlr.mjs";
-import { a as SpeakButton, n as Button, r as PosBadge } from "./speak-button-CwCVNvPz.mjs";
-import { n as lookupPhrase, t as Textarea } from "./lookup-e3FZE4tM.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/translate-WAXqVw5c.js
+import { n as useWordStore } from "./router-C0Aafbcp.mjs";
+import { n as Button, r as PosBadge } from "./pos-CHniOR3Y.mjs";
+import { t as Textarea } from "./textarea-Co25t2iR.mjs";
+import { t as SpeakButton } from "./speak-button-CkUCZ3dc.mjs";
+import { t as lookupPhrase } from "./lookup-CNHju-oU.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/translate-D8JjQY7R.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 function hasCjk(text) {
@@ -25,10 +27,16 @@ function TranslatePage() {
 		}
 		setLoading(true);
 		try {
-			const res = await lookupPhrase({ data: {
-				text: value,
-				hint: hasCjk(value) ? "zh" : "en"
-			} });
+			const res = await lookupPhrase({
+				data: {
+					text: value,
+					hint: hasCjk(value) ? "zh" : "en"
+				},
+				onPartial: (partial) => {
+					setResult(partial);
+					setLoading(false);
+				}
+			});
 			if (!res.ok) {
 				toast.error(res.error);
 				setResult(null);

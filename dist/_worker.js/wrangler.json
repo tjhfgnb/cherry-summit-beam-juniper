@@ -1,8 +1,8 @@
 {
   "compatibility_date": "2026-09-10",
-  "pages_build_output_dir": "..",
-  "name": "app-builder-workspace",
+  "name": "yingxiben",
   "compatibility_flags": [
     "nodejs_compat"
-  ]
+  ],
+  "pages_build_output_dir": ".."
 }

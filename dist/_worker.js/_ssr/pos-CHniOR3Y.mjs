@@ -1,11 +1,10 @@
 import { r as __toESM } from "../_runtime.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-import { n as Volume2 } from "../_libs/lucide-react.mjs";
 import { c as Slot } from "../_libs/@radix-ui/react-dialog+[...].mjs";
 import { t as cva } from "../_libs/class-variance-authority+clsx.mjs";
-import { a as POS_BY_KEY, l as parsePos, o as POS_OPTIONS, p as cn, u as togglePosKey } from "./router-ugn03xlr.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/speak-button-CwCVNvPz.js
+import { d as togglePosKey, m as cn, o as POS_BY_KEY, s as POS_OPTIONS, u as parsePos } from "./router-C0Aafbcp.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/pos-CHniOR3Y.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var buttonVariants = cva("inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-[background-color,color,box-shadow,transform,opacity] duration-150 ease-out select-none active:not-disabled:scale-[0.96] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg [&_svg]:pointer-events-none [&_svg]:shrink-0", {
@@ -94,39 +93,5 @@ function PosPicker({ value, onChange }) {
 		})
 	});
 }
-function ensureVoices() {
-	if (typeof window === "undefined" || !window.speechSynthesis) return [];
-	const voices = window.speechSynthesis.getVoices();
-	if (voices.length);
-	return voices;
-}
-if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => {};
-function speakEnglish(text) {
-	if (typeof window === "undefined" || !window.speechSynthesis) return;
-	const trimmed = text.trim();
-	if (!trimmed) return;
-	window.speechSynthesis.cancel();
-	const utter = new SpeechSynthesisUtterance(trimmed);
-	utter.lang = "en-US";
-	utter.rate = .92;
-	const voices = ensureVoices();
-	const preferred = voices.find((v) => /en-US/i.test(v.lang) && /natural|premium|enhanced/i.test(v.name)) ?? voices.find((v) => /en-US/i.test(v.lang)) ?? voices.find((v) => /^en/i.test(v.lang));
-	if (preferred) utter.voice = preferred;
-	window.speechSynthesis.speak(utter);
-}
-function SpeakButton({ text, className, size = "icon-sm" }) {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-		type: "button",
-		variant: "ghost",
-		size,
-		className: cn("text-muted hover:text-accent", className),
-		"aria-label": `朗讀 ${text}`,
-		onClick: (e) => {
-			e.stopPropagation();
-			speakEnglish(text);
-		},
-		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Volume2, { className: "size-4" })
-	});
-}
 //#endregion
-export { SpeakButton as a, PosPicker as i, Button as n, PosBadge as r, Badge as t };
+export { PosPicker as i, Button as n, PosBadge as r, Badge as t };
