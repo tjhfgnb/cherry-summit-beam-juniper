@@ -1,12 +1,14 @@
 import { i as __toESM } from "../_runtime.mjs";
 import { n as require_react } from "../_libs/@radix-ui/react-compose-refs+[...].mjs";
 import { n as require_jsx_runtime } from "../_libs/radix-ui__react-context+react.mjs";
-import { d as LoaderCircle, f as Languages, g as ArrowRightLeft, l as Plus } from "../_libs/lucide-react.mjs";
+import { _ as ArrowRightLeft, d as LoaderCircle, l as Plus, p as Languages } from "../_libs/lucide-react.mjs";
 import { n as toast } from "../_libs/sonner.mjs";
-import { n as useWordStore } from "./router-aAxyo0pS.mjs";
-import { a as SpeakButton, n as Button, r as PosBadge } from "./speak-button-Bj4K6KhL.mjs";
-import { n as lookupPhrase, t as Textarea } from "./lookup-CwZM8uwT.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/translate-6Ko2iNPb.js
+import { n as useWordStore } from "./router-BdPjIZDy.mjs";
+import { n as Button, r as PosBadge } from "./pos-Z3jXgYjo.mjs";
+import { t as Textarea } from "./textarea-CyaCkn6C.mjs";
+import { t as SpeakButton } from "./speak-button-DmxrY2KG.mjs";
+import { t as lookupPhrase } from "./lookup-DnXkgjnh.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/translate-FXYQxb7A.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 function hasCjk(text) {

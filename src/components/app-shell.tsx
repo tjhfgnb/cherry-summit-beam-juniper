@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BookOpen, Languages, Repeat } from "lucide-react";
+import { BookOpen, Languages, ListPlus, Repeat } from "lucide-react";
 import { Toaster } from "sonner";
 import { BrandMark } from "@/components/brand-mark";
 import { isDue } from "@/lib/srs";
@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/", label: "單字本", icon: BookOpen },
+  { to: "/add", label: "速加", icon: ListPlus },
   { to: "/translate", label: "翻譯", icon: Languages },
   { to: "/practice", label: "練習", icon: Repeat },
 ] as const;
@@ -86,7 +87,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm md:hidden">
-        <div className="mx-auto grid max-w-lg grid-cols-3">
+        <div className="mx-auto grid max-w-lg grid-cols-4">
           {NAV.map((item) => {
             const active =
               item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);

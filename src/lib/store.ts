@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { canonicalizePos } from "./pos";
+import { canonicalizePos, formatPos, parsePos } from "./pos";
+import { mergeGloss } from "./bulk";
 import type { NewWordInput, PracticeStats, Word } from "./types";
 import { buildSeedWords } from "./seed-words";
 import { bumpStreak, nextReview, type Quality } from "./srs";
@@ -12,6 +13,7 @@ type WordState = {
   stats: PracticeStats;
   selectedIds: string[];
   addWord: (input: NewWordInput) => AddResult;
+  importMany: (items: NewWordInput[]) => { added: number; merged: number; ids: string[] };
   updateWord: (id: string, patch: Partial<Word>) => void;
   removeWord: (id: string) => void;
   toggleStar: (id: string) => void;
@@ -66,11 +68,13 @@ export const useWordStore = create<WordState>()(
         );
         if (existing) {
           const patch: Partial<Word> = { updatedAt: Date.now() };
-          if (zh && zh !== existing.zh) patch.zh = zh;
+          if (zh) patch.zh = mergeGloss(existing.zh, zh);
           if (input.phonetic && !existing.phonetic) patch.phonetic = input.phonetic;
           if (input.exampleEn && !existing.exampleEn) patch.exampleEn = input.exampleEn;
           if (input.exampleZh && !existing.exampleZh) patch.exampleZh = input.exampleZh;
-          if (input.pos && !existing.pos) patch.pos = canonicalizePos(input.pos);
+          if (input.pos) {
+            patch.pos = formatPos([...parsePos(existing.pos), ...parsePos(input.pos)]);
+          }
           get().updateWord(existing.id, patch);
           const updated = get().words.find((w) => w.id === existing.id) ?? existing;
           return { word: updated, duplicated: true };
@@ -99,6 +103,66 @@ export const useWordStore = create<WordState>()(
         };
         set((s) => ({ words: [word, ...s.words] }));
         return { word, duplicated: false };
+      },
+      importMany: (items) => {
+        const ids: string[] = [];
+        let added = 0;
+        let merged = 0;
+        let words = get().words;
+        for (const input of items) {
+          const en = normalizeEn(input.en);
+          const zh = input.zh.trim();
+          if (!en || !zh) continue;
+          const existing = words.find((w) => w.en.toLowerCase() === en.toLowerCase());
+          if (existing) {
+            words = words.map((w) =>
+              w.id === existing.id
+                ? {
+                    ...w,
+                    zh: mergeGloss(w.zh, zh),
+                    pos: formatPos([...parsePos(w.pos), ...parsePos(input.pos ?? "")]),
+                    phonetic: w.phonetic || input.phonetic?.trim() || "",
+                    exampleEn: w.exampleEn || input.exampleEn?.trim() || "",
+                    exampleZh: w.exampleZh || input.exampleZh?.trim() || "",
+                    updatedAt: Date.now(),
+                  }
+                : w,
+            );
+            ids.push(existing.id);
+            merged += 1;
+          } else {
+            const now = Date.now();
+            const word: Word = {
+              id: makeId(),
+              en,
+              zh,
+              phonetic: input.phonetic?.trim() ?? "",
+              pos: canonicalizePos(input.pos ?? ""),
+              exampleEn: input.exampleEn?.trim() ?? "",
+              exampleZh: input.exampleZh?.trim() ?? "",
+              note: input.note?.trim() ?? "",
+              tags: input.tags ?? [],
+              starred: false,
+              ease: 0,
+              intervalDays: 0,
+              nextReviewAt: 0,
+              reviewCount: 0,
+              correctCount: 0,
+              wrongCount: 0,
+              createdAt: now,
+              updatedAt: now,
+              source: input.source ?? "manual",
+            };
+            words = [word, ...words];
+            ids.push(word.id);
+            added += 1;
+          }
+        }
+        set((s) => ({
+          words,
+          selectedIds: [...new Set([...ids, ...s.selectedIds])],
+        }));
+        return { added, merged, ids };
       },
       updateWord: (id, patch) => {
         const next = patch.pos !== undefined ? { ...patch, pos: canonicalizePos(patch.pos) } : patch;

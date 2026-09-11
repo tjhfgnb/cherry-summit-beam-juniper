@@ -76,6 +76,13 @@ function Home() {
       </div>
 
       <QuickAdd onManual={openManual} />
+      <p className="mt-2 text-sm text-muted">
+        要一次貼很多？到{" "}
+        <Link to="/add" className="text-accent underline-offset-2 hover:underline">
+          速加
+        </Link>
+        ，用 (n) (v) 標詞性。
+      </p>
 
       <div className="relative mt-4">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-faint" />
