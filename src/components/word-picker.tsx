@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type PointerEvent } from "react";
 import { Search } from "lucide-react";
 import { SelectCircle } from "@/components/select-circle";
 import { Input } from "@/components/ui/input";
@@ -88,9 +88,13 @@ export function WordPicker({
                 <button
                   type="button"
                   aria-pressed={picked}
-                  onClick={() => onToggle(word.id)}
+                  onPointerDown={(e: PointerEvent<HTMLButtonElement>) => {
+                    if (e.pointerType === "mouse" && e.button !== 0) return;
+                    e.preventDefault();
+                    onToggle(word.id);
+                  }}
                   className={cn(
-                    "flex min-h-12 w-full items-center gap-3 px-3 py-2 text-left transition-colors duration-150",
+                    "flex min-h-12 w-full items-center gap-3 px-3 py-2 text-left select-none transition-colors duration-100",
                     picked ? "bg-accent-soft/60" : "hover:bg-bg-warm",
                   )}
                 >

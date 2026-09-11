@@ -182,8 +182,15 @@ export const useWordStore = create<WordState>()(
       partialize: (s) => ({
         words: s.words,
         stats: s.stats,
-        selectedIds: s.selectedIds,
       }),
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<Pick<WordState, "words" | "stats">>;
+        return {
+          ...current,
+          ...p,
+          selectedIds: current.selectedIds,
+        };
+      },
     },
   ),
 );

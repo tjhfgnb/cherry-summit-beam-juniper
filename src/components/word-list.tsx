@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type PointerEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, Pencil, Star, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +59,14 @@ export function WordList({
   const visibleSelected = visibleIds.filter((id) => selectedSet.has(id)).length;
   const allVisibleSelected = visibleIds.length > 0 && visibleSelected === visibleIds.length;
 
+  function pick(id: string) {
+    return (e: PointerEvent<HTMLButtonElement>) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      e.preventDefault();
+      toggleSelected(id);
+    };
+  }
+
   const chips: { id: Filter; label: string }[] = [
     { id: "all", label: `全部 ${words.length}` },
     { id: "due", label: "待複習" },
@@ -68,7 +76,7 @@ export function WordList({
   ];
 
   return (
-    <section className={cn("mt-6", selectedIds.length > 0 && "pb-24")}>
+    <section className={cn("mt-6", selectedIds.length > 0 && "pb-32")}>
       <div className="flex flex-wrap items-center gap-2">
         {chips.map((chip) => (
           <button
@@ -126,12 +134,18 @@ export function WordList({
                       type="button"
                       aria-pressed={picked}
                       aria-label={picked ? `取消圈選 ${word.en}` : `圈選 ${word.en}`}
-                      onClick={() => toggleSelected(word.id)}
-                      className="flex min-w-0 flex-1 items-center gap-1 py-3 pl-1.5 pr-1 text-left"
+                      onPointerDown={pick(word.id)}
+                      className="flex w-14 shrink-0 items-center justify-center self-stretch rounded-l-xl active:bg-accent-soft/80"
                     >
-                      <SelectCircle selected={picked} className="mx-2 shrink-0" />
-                      <span className="min-w-0 flex-1">
-                        <span className="flex items-start justify-between gap-3">
+                      <SelectCircle selected={picked} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-pressed={picked}
+                      onPointerDown={pick(word.id)}
+                      className="flex min-w-0 flex-1 items-center py-3 pr-1 text-left select-none active:bg-accent-soft/40"
+                    >
+                        <span className="flex w-full min-w-0 items-start justify-between gap-3">
                           <span className="min-w-0">
                             <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                               <span className="font-display text-xl font-semibold tracking-tight text-ink">
@@ -143,7 +157,6 @@ export function WordList({
                           </span>
                           <Mastery ease={word.ease} />
                         </span>
-                      </span>
                     </button>
                     <div className="flex items-start gap-0.5 py-2 pr-2">
                       <Button
@@ -246,7 +259,7 @@ export function WordList({
 
       {selectedIds.length > 0 ? (
         <div className="pointer-events-none fixed inset-x-0 bottom-24 z-40 px-4 md:bottom-6 md:left-56">
-          <div className="pointer-events-auto mx-auto flex max-w-3xl items-center gap-3 rounded-xl bg-ink px-3 py-2.5 text-accent-fg shadow-card-hover">
+          <div className="mx-auto flex max-w-3xl items-center gap-3 rounded-xl bg-ink/95 px-3 py-2.5 text-accent-fg shadow-card-hover">
             <p className="min-w-0 flex-1 text-sm font-medium">
               已圈選{" "}
               <span className="tabular-nums font-display text-base font-semibold">
@@ -258,12 +271,12 @@ export function WordList({
               type="button"
               variant="ghost"
               size="sm"
-              className="text-accent-fg/80 hover:bg-accent-fg/10 hover:text-accent-fg"
+              className="pointer-events-auto text-accent-fg/80 hover:bg-accent-fg/10 hover:text-accent-fg"
               onClick={clearSelected}
             >
               清除
             </Button>
-            <Button asChild size="sm" className="bg-accent-fg text-ink hover:bg-accent-fg/90">
+            <Button asChild size="sm" className="pointer-events-auto bg-accent-fg text-ink hover:bg-accent-fg/90">
               <Link to="/practice">考這些</Link>
             </Button>
           </div>
