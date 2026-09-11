@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Fraunces", "Noto Sans TC", Georgia, "Times New Roman", serif;
+  --font-sans: "Noto Sans TC", "Segoe UI", system-ui, sans-serif;
+
+  --color-bg: #f3eee4;
+  --color-bg-warm: #ebe4d6;
+  --color-surface: #faf7f0;
+  --color-surface-2: #f1ebe0;
+  --color-ink: #1c1915;
+  --color-ink-soft: #3d3830;
+  --color-muted: #6a6358;
+  --color-faint: #9a9286;
+  --color-line: #e4dcd0;
+  --color-accent: #21564e;
+  --color-accent-hover: #1a453f;
+  --color-accent-fg: #f4efe6;
+  --color-accent-soft: #dce8e5;
+  --color-danger: #9b3d2f;
+  --color-ok: #2f6b4f;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 28px;
+
+  --shadow-card:
+    0px 0px 0px 1px rgba(28, 25, 21, 0.06),
+    0px 1px 2px -1px rgba(28, 25, 21, 0.06),
+    0px 2px 8px 0px rgba(28, 25, 21, 0.04);
+  --shadow-card-hover:
+    0px 0px 0px 1px rgba(28, 25, 21, 0.1),
+    0px 1px 2px -1px rgba(28, 25, 21, 0.08),
+    0px 8px 20px -8px rgba(28, 25, 21, 0.12);
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html,
+  body,
+  #app {
+    min-height: 100dvh;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    background-image: radial-gradient(
+      ellipse 80% 50% at 50% -12%,
+      color-mix(in oklab, var(--color-accent) 7%, transparent),
+      transparent 60%
+    );
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flip-inner,
+  .session-swap {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.session-swap {
+  animation: session-in 180ms var(--ease-out-soft);
+}
+
+@keyframes session-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "英習本 Wordbook",
+      "hasCanvas": false,
+      "bodyTextLen": 563,
+      "bodyTextHash": "b54c16e6a1c5b5b212a8502b17115c23ed9100fb7f45b70a02c08248100a8cfd",
+      "bodyTextPrefix": "英習本 WORDBOOK 單字本 翻譯 練習 18 連續練習 0天 夜深了 單字本 點一列就能圈選要考的單字，再按「考這些」。也",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "英習本 Wordbook",
+      "hasCanvas": false,
+      "bodyTextLen": 555,
+      "bodyTextHash": "4187e73d425d2593a10a5752551c2429f6a397dc761a39898ee5a7f880044a2d",
+      "bodyTextPrefix": "英習本 WORDBOOK 夜深了 單字本 點一列就能圈選要考的單字，再按「考這些」。也可以翻譯或自己填。 單字 18 待複習 1",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}
