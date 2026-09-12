@@ -2,7 +2,9 @@ import type { ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { BookOpen, Languages, ListPlus, Repeat } from "lucide-react";
 import { Toaster } from "sonner";
+import { AccountChip } from "@/components/account-chip";
 import { BrandMark } from "@/components/brand-mark";
+import { WordbookSync } from "@/components/wordbook-sync";
 import { isDue } from "@/lib/srs";
 import { useWordStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -21,6 +23,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-dvh bg-bg text-ink">
+      <WordbookSync />
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-56 flex-col border-r border-line bg-surface/80 px-4 py-6 md:flex">
         <Link to="/" className="mb-8 flex items-center gap-2.5 px-1">
           <BrandMark />
@@ -72,14 +75,18 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="ml-1 text-sm font-sans font-medium text-muted">天</span>
           </p>
         </div>
+        <div className="mt-3">
+          <AccountChip />
+        </div>
       </aside>
 
       <header className="sticky top-0 z-20 flex h-14 items-center gap-2.5 border-b border-line bg-bg/90 px-4 backdrop-blur-sm md:hidden">
         <BrandMark className="size-7" />
-        <div className="leading-tight">
+        <div className="min-w-0 flex-1 leading-tight">
           <p className="font-display text-base font-semibold tracking-tight">英習本</p>
           <p className="text-xs uppercase tracking-widest text-muted">Wordbook</p>
         </div>
+        <AccountChip />
       </header>
 
       <main className="px-4 pb-28 pt-5 md:ml-56 md:px-8 md:pb-12 md:pt-8">

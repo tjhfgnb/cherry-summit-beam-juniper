@@ -1,14 +1,16 @@
 # 英習本 Wordbook
 
-自己的英文單字本：單字本、速加、翻譯、閃卡／選擇／拼寫練習。
+自己的英文單字本：單字本、速加、翻譯、閃卡／選擇／拼寫練習。可建立帳號，把單字與練習紀錄存在雲端。
 
 ## 部署到 Cloudflare Pages
 
-請接到這個 GitHub 倉庫，並用下面設定（不要用預設的 `npm run build`，那是給 Vercel 的）。
+可以。練習、速加、翻譯不需資料庫，單字會存在瀏覽器。  
+**登入並把紀錄存到雲端**則需要一個 Postgres（建議 Neon 免費方案），Cloudflare 不會自動提供。
 
-1. Cloudflare Dashboard → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**
-2. 選倉庫 `tjhfgnb/cherry-summit-beam-juniper`，分支 `main`
-3. 建置設定：
+### 1. 建置設定
+
+Workers & Pages → Create → Pages → Connect to Git  
+倉庫：`tjhfgnb/cherry-summit-beam-juniper`，分支 `main`
 
 | 欄位 | 值 |
 |---|---|
@@ -17,12 +19,25 @@
 | Build output directory | `dist` |
 | Node.js version | `22` |
 
-4. **Settings → Functions → Compatibility flags** 加上 `nodejs_compat`（`wrangler.jsonc` 裡已寫，多數情況會自動帶上）
-5. 儲存後 **Retry deployment**
+Compatibility flags 加 `nodejs_compat`（`wrangler.jsonc` 已寫）。
 
-建置成功後，底部導覽會有 **單字本 / 速加 / 翻譯 / 練習**。速加頁路徑是 `/add`。
+### 2. 若要帳號保存（建議）
 
-本機預覽 Cloudflare 輸出：
+1. 到 [Neon](https://neon.tech) 開一個免費資料庫，複製連線字串（Connection string）
+2. Cloudflare Pages → Settings → Environment variables，**Production** 加上：
+
+| 變數 | 值 |
+|---|---|
+| `DATABASE_URL` | Neon 連線字串 |
+| `BETTER_AUTH_SECRET` | 一組夠長的隨機字串（至少 32 字） |
+| `BETTER_AUTH_URL` | 你的網站網址，例如 `https://yingxiben.pages.dev`（不要結尾斜線） |
+
+3. 重新部署一次。之後用**電子郵件**建立帳號即可。  
+   Google / X 登入是給 Grok 發布用的，Cloudflare 上請改用信箱。
+
+沒填 `DATABASE_URL` 也能用網站，只是登入無法長期保存（換裝置會不見）。
+
+### 本機預覽 Cloudflare 輸出
 
 ```bash
 npm run build:cf

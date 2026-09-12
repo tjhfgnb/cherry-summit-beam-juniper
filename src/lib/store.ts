@@ -23,6 +23,7 @@ type WordState = {
   recordReview: (id: string, quality: Quality) => void;
   restoreSeed: () => number;
   markPracticedToday: () => void;
+  hydrateCloud: (words: Word[], stats: PracticeStats) => void;
 };
 
 function normalizeEn(value: string) {
@@ -236,6 +237,9 @@ export const useWordStore = create<WordState>()(
           const next = bumpStreak(s.stats.lastPracticeDate, s.stats.streak);
           return { stats: { ...s.stats, ...next } };
         });
+      },
+      hydrateCloud: (words, stats) => {
+        set({ words, stats });
       },
     }),
     {
