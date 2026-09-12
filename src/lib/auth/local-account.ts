@@ -30,11 +30,25 @@ export function subscribeLocalAuth(cb: () => void) {
   };
 }
 
-/** True on the Cloudflare static shell (no /api/auth server). */
-export function isLocalAuthOnly(): boolean {
+/** True when this page is the Cloudflare static shell. Cloud API may still exist. */
+export function isStaticSpaShell(): boolean {
   if (typeof window === "undefined") return false;
-  if (document.getElementById("root")) return true;
-  return window.location.hostname.endsWith(".pages.dev");
+  return Boolean(document.getElementById("root"));
+}
+
+export async function probeCloudAuth(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  try {
+    const res = await fetch("/api/auth/ok", { credentials: "include" });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/** @deprecated prefer probeCloudAuth — kept so older calls still compile */
+export function isLocalAuthOnly(): boolean {
+  return isStaticSpaShell();
 }
 
 function readAccounts(): StoredAccount[] {

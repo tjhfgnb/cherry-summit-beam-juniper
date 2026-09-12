@@ -12,6 +12,7 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: "@/lib/wordbook-api", replacement: path.join(src, "lib/spa-wordbook-api.ts") },
+      { find: "@/lib/wordbook-data.server", replacement: empty },
       { find: "@/lib/auth/server", replacement: empty },
       { find: "@/lib/auth/middleware", replacement: empty },
       { find: "@tanstack/start-server-core", replacement: empty },
