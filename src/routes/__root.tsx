@@ -7,11 +7,12 @@ import appCss from "../styles.css?url";
 
 const APP_NAME = "英習本 Wordbook";
 
+function isStaticSpa(): boolean {
+  return typeof document !== "undefined" && document.getElementById("root") !== null;
+}
+
 function RootShell({ children }: { children: ReactNode }) {
-  // Cloudflare static shell mounts into #root — do not wrap a second <html>.
-  if (typeof document !== "undefined" && document.getElementById("root")) {
-    return <>{children}</>;
-  }
+  if (isStaticSpa()) return <>{children}</>;
   return (
     <html lang="zh-Hant" suppressHydrationWarning>
       <head>
@@ -39,8 +40,6 @@ function RootApp() {
 }
 
 export const Route = createRootRoute({
-  shellComponent: RootShell,
-  component: RootApp,
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -65,4 +64,6 @@ export const Route = createRootRoute({
       },
     ],
   }),
+  shellComponent: RootShell,
+  component: RootApp,
 });

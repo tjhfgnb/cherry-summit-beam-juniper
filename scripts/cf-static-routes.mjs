@@ -1,36 +1,17 @@
-import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-/**
- * Cloudflare Free Workers crash this app's SSR (no Neon TCP). Serve a static
- * SPA: HTML + JS. Patch Start's hydrateRoot(document) → createRoot(#root)
- * so the empty shell actually mounts the UI.
- */
 const dist = "dist";
 const assetsDir = join(dist, "assets");
 if (!existsSync(assetsDir)) process.exit(0);
 
 const files = readdirSync(assetsDir);
 const css = files.find((f) => f.startsWith("styles-") && f.endsWith(".css"));
-const jsCandidates = files.filter((f) => f.startsWith("index-") && f.endsWith(".js"));
-jsCandidates.sort((a, b) => statSync(join(assetsDir, b)).size - statSync(join(assetsDir, a)).size);
-const js = jsCandidates[0];
-if (!css || !js) {
-  console.warn("[cf-static-routes] missing hashed assets, skip");
-  process.exit(0);
-}
+const js = existsSync(join(assetsDir, "spa.js")) ? "spa.js" : undefined;
 
-const jsPath = join(assetsDir, js);
-let bundle = readFileSync(jsPath, "utf8");
-const patched = bundle.replace(
-  /\(0,([A-Za-z_$][\w$]*)\.hydrateRoot\)\(document,/,
-  '(0,$1.createRoot)(document.getElementById("root")).render(',
-);
-if (patched === bundle) {
-  console.warn("[cf-static-routes] hydrateRoot pattern not found — UI may stay blank");
-} else {
-  writeFileSync(jsPath, patched);
-  console.log("[cf-static-routes] patched hydrateRoot → createRoot(#root)");
+if (!css || !js) {
+  console.error("[cf-static-routes] need styles-*.css and assets/spa.js");
+  process.exit(1);
 }
 
 const html = `<!DOCTYPE html>
@@ -49,8 +30,14 @@ const html = `<!DOCTYPE html>
   </head>
   <body class="antialiased" style="margin:0;background:#F3EEE4;color:#1C1915;font-family:system-ui,sans-serif">
     <div id="root">
-      <p style="padding:2rem;text-align:center;letter-spacing:.2em">載入英習本…</p>
+      <p style="padding:2rem;text-align:center">載入英習本…</p>
     </div>
+    <script>
+      window.addEventListener("error", function (e) {
+        var r = document.getElementById("root");
+        if (r && e.message) r.textContent = "載入失敗：" + e.message;
+      });
+    </script>
     <script type="module" src="/assets/${js}"></script>
   </body>
 </html>
@@ -79,4 +66,4 @@ writeFileSync(
 `,
 );
 
-console.log(`[cf-static-routes] wrote index.html → /assets/${js}`);
+console.log(`[cf-static-routes] index.html → /assets/${js}`);
