@@ -1,8 +1,13 @@
-import { A as invariant, C as createInlineCssStyleAsset, F as decodePath, I as rootRouteId, M as dehydrateSsrMatchId, O as _getRenderedMatches, S as createInlineCssPlaceholderAsset, T as getStylesheetHref, b as GLOBAL_TSR, j as createSieveCache, x as TSR_SCRIPT_BARRIER_ID } from "./react-router+[...].mjs";
+import { n as __esmMin } from "../../_runtime.mjs";
+import { C as createInlineCssPlaceholderAsset, E as getStylesheetHref, L as decodePath, M as createSieveCache, N as dehydrateSsrMatchId, R as rootRouteId, S as TSR_SCRIPT_BARRIER_ID, j as invariant, k as _getRenderedMatches, w as createInlineCssStyleAsset, x as GLOBAL_TSR } from "./react-router+[...].mjs";
 //#region node_modules/unenv/dist/runtime/polyfill/globalthis.mjs
-var globalthis_default = globalThis;
+var globalthis_default;
+var init_globalthis = __esmMin((() => {
+	globalthis_default = globalThis;
+}));
 //#endregion
 //#region node_modules/seroval/dist/index.js
+init_globalthis();
 var SYM_ASYNC_ITERATOR = Symbol.asyncIterator;
 var SYM_HAS_INSTANCE = Symbol.hasInstance;
 var SYM_IS_CONCAT_SPREADABLE = Symbol.isConcatSpreadable;
@@ -3641,4 +3646,4 @@ function waitForRequest(value, signal, onLate) {
 	});
 }
 //#endregion
-export { getOrigin as a, createSerializationAdapter as c, toCrossJSONAsync as d, toCrossJSONStream as f, getNormalizedURL as i, makeSerovalPlugin as l, mergeHeaders as n, defaultSerovalPlugins as o, attachRouterServerSsrUtils as r, createRawStreamRPCPlugin as s, waitForRequest as t, fromJSON as u };
+export { getOrigin as a, createSerializationAdapter as c, toCrossJSONAsync as d, toCrossJSONStream as f, getNormalizedURL as i, makeSerovalPlugin as l, init_globalthis as m, mergeHeaders as n, defaultSerovalPlugins as o, globalthis_default as p, attachRouterServerSsrUtils as r, createRawStreamRPCPlugin as s, waitForRequest as t, fromJSON as u };

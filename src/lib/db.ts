@@ -10,6 +10,17 @@ const rawDatabaseUrl =
 const databaseUrl =
   rawDatabaseUrl && rawDatabaseUrl.trim() ? rawDatabaseUrl : undefined;
 
+/** Cloudflare Workers/Pages — PGLite WASM cannot boot here. */
+function isCloudflareRuntime(): boolean {
+  if (typeof (globalThis as { HTMLRewriter?: unknown }).HTMLRewriter === "function") {
+    return true;
+  }
+  if (typeof process !== "undefined" && process.env.CF_PAGES === "1") return true;
+  const ua =
+    typeof navigator !== "undefined" ? navigator.userAgent : undefined;
+  return ua === "Cloudflare-Workers";
+}
+
 /**
  * Active backend: real **Neon** when `DATABASE_URL` is set (deployed / configured
  * sandbox), otherwise a local embedded **PGLite** (Postgres compiled to WASM) so
@@ -176,7 +187,13 @@ async function createSql(): Promise<Sql> {
         "or a server route loader, never from client code.",
     );
   }
-  return dbSource === "neon" ? createNeonSql() : createPgliteSql();
+  if (dbSource === "neon") return createNeonSql();
+  if (isCloudflareRuntime()) {
+    throw new Error(
+      "Cloudflare needs DATABASE_URL (Neon). PGLite is only for the live preview.",
+    );
+  }
+  return createPgliteSql();
 }
 
 /**
@@ -200,6 +217,11 @@ export function getSql(): Promise<Sql> {
  * Kysely dialect). Throws when `DATABASE_URL` is set (that path uses Neon).
  */
 export async function getPglite(): Promise<import("@electric-sql/pglite").PGlite> {
+  if (isCloudflareRuntime()) {
+    throw new Error(
+      "PGLite is not available on Cloudflare. Set DATABASE_URL to a Postgres database.",
+    );
+  }
   if (dbSource !== "pglite") {
     throw new Error("getPglite() is only available on the PGLite fallback (no DATABASE_URL)");
   }
@@ -221,6 +243,7 @@ export async function getPglite(): Promise<import("@electric-sql/pglite").PGlite
  */
 export function ensureDbReady(): Promise<void> {
   if (dbSource !== "pglite") return Promise.resolve();
+  if (isCloudflareRuntime()) return Promise.resolve();
   return getSql().then(() => undefined);
 }
 
@@ -229,7 +252,7 @@ export function ensureDbReady(): Promise<void> {
 const globalBoot = globalThis as typeof globalThis & {
   __pgBootstrapPromise__?: Promise<void>;
 };
-if (typeof window === "undefined" && dbSource === "pglite") {
+if (typeof window === "undefined" && dbSource === "pglite" && !isCloudflareRuntime()) {
   globalBoot.__pgBootstrapPromise__ ??= ensureDbReady().catch((err) => {
     globalBoot.__pgBootstrapPromise__ = undefined;
     console.error("[db] PGLite bootstrap failed:", err);
