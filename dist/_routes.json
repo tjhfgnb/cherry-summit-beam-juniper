@@ -1,44 +1,9 @@
 {
   "version": 1,
   "include": [
-    "/*"
+    "/api/*"
   ],
   "exclude": [
-    "/favicon.svg",
-    "/og.jpg",
-    "/__grok/icon-180.png",
-    "/assets/add-C76eBjuZ.js",
-    "/assets/button-CkbSBEzt.js",
-    "/assets/client-C85fcJ4s.js",
-    "/assets/index-DWJ8xkbO.js",
-    "/assets/input-T96fdqG-.js",
-    "/assets/link-CdqU-tlK.js",
-    "/assets/login-C1nXgJng.js",
-    "/assets/lookup-CuvyqEKP.js",
-    "/assets/pos-D_oaNUYj.js",
-    "/assets/practice-D0v5Vl2M.js",
-    "/assets/react-SIfiwpqq.js",
-    "/assets/routes-BhKzQy5X.js",
-    "/assets/select-circle-DxLuWSZF.js",
-    "/assets/speak-button-DRElR9Yd.js",
-    "/assets/store-BDTfdLjU.js",
-    "/assets/styles-DucsiDdn.css",
-    "/assets/textarea-DajKnqbN.js",
-    "/assets/translate-CCsWK56I.js",
-    "/assets/use-current-user-BLUaSyDf.js",
-    "/assets/utils-sqwXXi6S.js",
-    "/__grok/install/styles.css",
-    "/__grok/install/assets/homescreen/glass-puzzle.svg",
-    "/__grok/install/assets/homescreen/glass-share.svg",
-    "/__grok/install/assets/homescreen/logo-grok.svg",
-    "/__grok/install/assets/homescreen/ob-ipad.png",
-    "/__grok/install/assets/homescreen/ob-phone.png",
-    "/__grok/install/assets/homescreen/plus.svg",
-    "/",
-    "/index.html",
-    "/add",
-    "/login",
-    "/practice",
-    "/translate"
+    "/*"
   ]
 }

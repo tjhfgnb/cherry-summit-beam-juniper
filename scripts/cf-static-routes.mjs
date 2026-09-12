@@ -2,8 +2,9 @@ import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "
 import { join } from "node:path";
 
 /**
- * Cloudflare Free Workers have a 10ms CPU budget. Serving the wordbook as a
- * static SPA avoids running the SSR worker on every page view.
+ * Cloudflare Free Workers crash this app's SSR (no Neon TCP). Serve a static
+ * SPA: HTML + JS. Patch Start's hydrateRoot(document) → createRoot(#root)
+ * so the empty shell actually mounts the UI.
  */
 const dist = "dist";
 const assetsDir = join(dist, "assets");
@@ -17,6 +18,19 @@ const js = jsCandidates[0];
 if (!css || !js) {
   console.warn("[cf-static-routes] missing hashed assets, skip");
   process.exit(0);
+}
+
+const jsPath = join(assetsDir, js);
+let bundle = readFileSync(jsPath, "utf8");
+const patched = bundle.replace(
+  /\(0,([A-Za-z_$][\w$]*)\.hydrateRoot\)\(document,/,
+  '(0,$1.createRoot)(document.getElementById("root")).render(',
+);
+if (patched === bundle) {
+  console.warn("[cf-static-routes] hydrateRoot pattern not found — UI may stay blank");
+} else {
+  writeFileSync(jsPath, patched);
+  console.log("[cf-static-routes] patched hydrateRoot → createRoot(#root)");
 }
 
 const html = `<!DOCTYPE html>
@@ -33,34 +47,36 @@ const html = `<!DOCTYPE html>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" />
   </head>
-  <body>
+  <body class="antialiased" style="margin:0;background:#F3EEE4;color:#1C1915;font-family:system-ui,sans-serif">
+    <div id="root">
+      <p style="padding:2rem;text-align:center;letter-spacing:.2em">載入英習本…</p>
+    </div>
     <script type="module" src="/assets/${js}"></script>
   </body>
 </html>
 `;
-
 writeFileSync(join(dist, "index.html"), html);
 
-const routesPath = join(dist, "_routes.json");
-if (existsSync(routesPath)) {
-  const routes = JSON.parse(readFileSync(routesPath, "utf8"));
-  const exclude = new Set(routes.exclude ?? []);
-  for (const extra of ["/", "/index.html", "/add", "/login", "/practice", "/translate"]) {
-    exclude.add(extra);
-  }
-  routes.exclude = [...exclude];
-  writeFileSync(routesPath, `${JSON.stringify(routes, null, 2)}\n`);
-}
+writeFileSync(
+  join(dist, "_routes.json"),
+  `${JSON.stringify(
+    {
+      version: 1,
+      include: ["/api/*"],
+      exclude: ["/*"],
+    },
+    null,
+    2,
+  )}\n`,
+);
 
-const redirectsPath = join(dist, "_redirects");
-const spaRedirects = `/add /index.html 200
-/login /index.html 200
-/practice /index.html 200
-/translate /index.html 200
-`;
-const existing = existsSync(redirectsPath) ? readFileSync(redirectsPath, "utf8") : "";
-if (!existing.includes("/index.html 200")) {
-  writeFileSync(redirectsPath, `${existing.trim()}\n${spaRedirects}`.trim() + "\n");
-}
+writeFileSync(
+  join(dist, "_redirects"),
+  `/add         /index.html  200
+/login       /index.html  200
+/practice    /index.html  200
+/translate   /index.html  200
+`,
+);
 
-console.log(`[cf-static-routes] wrote index.html -> /assets/${js}`);
+console.log(`[cf-static-routes] wrote index.html → /assets/${js}`);

@@ -1,4 +1,4 @@
-import{i as e,t}from"./react-SIfiwpqq.js";import{t as n}from"./link-CdqU-tlK.js";import{r}from"./utils-sqwXXi6S.js";import{c as i,o as a,t as o}from"./store-BDTfdLjU.js";import{n as s,t as c}from"./index-DWJ8xkbO.js";import{t as l}from"./button-CkbSBEzt.js";import{t as u}from"./textarea-DajKnqbN.js";import{t as d}from"./pos-D_oaNUYj.js";var f=e(t()),p=r(),m=`apple (n) 蘋果
+import{i as e,t}from"./react-SIfiwpqq.js";import{t as n}from"./link-CdqU-tlK.js";import{r}from"./utils-sqwXXi6S.js";import{c as i,o as a,t as o}from"./store-BDTfdLjU.js";import{n as s,t as c}from"./index-DBiFPg7g.js";import{t as l}from"./button-CkbSBEzt.js";import{t as u}from"./textarea-DajKnqbN.js";import{t as d}from"./pos-D_oaNUYj.js";var f=e(t()),p=r(),m=`apple (n) 蘋果
 run (v) 跑
 run (n) 跑步
 beautiful (adj) 美麗的

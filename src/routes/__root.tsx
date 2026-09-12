@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
@@ -6,7 +7,40 @@ import appCss from "../styles.css?url";
 
 const APP_NAME = "英習本 Wordbook";
 
+function RootShell({ children }: { children: ReactNode }) {
+  // Cloudflare static shell mounts into #root — do not wrap a second <html>.
+  if (typeof document !== "undefined" && document.getElementById("root")) {
+    return <>{children}</>;
+  }
+  return (
+    <html lang="zh-Hant" suppressHydrationWarning>
+      <head>
+        <HeadContent />
+      </head>
+      <body className="antialiased">
+        {children}
+        <Scripts />
+      </body>
+    </html>
+  );
+}
+
+function RootApp() {
+  return (
+    <>
+      <PreviewHostBridge />
+      <AuthProvider>
+        <AppShell>
+          <Outlet />
+        </AppShell>
+      </AuthProvider>
+    </>
+  );
+}
+
 export const Route = createRootRoute({
+  shellComponent: RootShell,
+  component: RootApp,
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -31,20 +65,4 @@ export const Route = createRootRoute({
       },
     ],
   }),
-  component: () => (
-    <html lang="zh-Hant" suppressHydrationWarning>
-      <head>
-        <HeadContent />
-      </head>
-      <body className="antialiased">
-        <PreviewHostBridge />
-        <AuthProvider>
-          <AppShell>
-            <Outlet />
-          </AppShell>
-        </AuthProvider>
-        <Scripts />
-      </body>
-    </html>
-  ),
 });
