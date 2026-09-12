@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { GROK_PROVIDERS, authClient, authEnabled, signIn } from "@/lib/auth/client";
+import { isLocalAuthOnly, localSignIn, localSignUp } from "@/lib/auth/local-account";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const localOnly = isLocalAuthOnly();
 
   if (isPending) {
     return <div className="h-64 animate-pulse rounded-xl bg-surface" />;
@@ -26,17 +28,31 @@ function Login() {
     e.preventDefault();
     setError("");
     setBusy(true);
+    const trimmedEmail = email.trim();
     try {
+      if (localOnly) {
+        if (mode === "signup") {
+          await localSignUp({
+            email: trimmedEmail,
+            password,
+            name: name.trim() || trimmedEmail,
+          });
+        } else {
+          await localSignIn({ email: trimmedEmail, password });
+        }
+        window.location.assign("/");
+        return;
+      }
       if (mode === "signup") {
         const { error: err } = await authClient.signUp.email({
-          email: email.trim(),
+          email: trimmedEmail,
           password,
-          name: name.trim() || email.trim(),
+          name: name.trim() || trimmedEmail,
         });
         if (err) throw new Error(err.message ?? "無法建立帳號");
       } else {
         const { error: err } = await authClient.signIn.email({
-          email: email.trim(),
+          email: trimmedEmail,
           password,
         });
         if (err) throw new Error(err.message ?? "登入失敗");
@@ -56,7 +72,9 @@ function Login() {
           {mode === "signup" ? "建立帳號" : "登入"}
         </h1>
         <p className="mt-2 text-sm text-muted">
-          登入後單字本、熟練度與連續天數會跟著帳號走，換裝置也還在。未登入仍可在這台裝置練習。
+          {localOnly
+            ? "帳號存在這台手機／電腦的瀏覽器裡，單字本會跟著帳號分開保存。清掉網站資料或換裝置就要重新建立。"
+            : "登入後單字本、熟練度與連續天數會跟著帳號走。未登入仍可在這台裝置練習。"}
         </p>
       </header>
 
@@ -127,6 +145,9 @@ function Login() {
               className="mt-1"
               autoComplete={mode === "signup" ? "new-password" : "current-password"}
             />
+            {mode === "signup" ? (
+              <p className="mt-1 text-xs text-faint">至少 8 個字</p>
+            ) : null}
           </div>
           {error ? <p className="text-sm text-danger">{error}</p> : null}
           <Button type="submit" className="w-full" disabled={busy}>
@@ -137,7 +158,7 @@ function Login() {
         <p className="text-sm text-muted">目前未開放登入。</p>
       )}
 
-      {authEnabled ? (
+      {authEnabled && !localOnly && GROK_PROVIDERS.length > 0 ? (
         <div className="mt-5 space-y-2">
           <p className="text-center text-xs uppercase tracking-widest text-faint">或用社群帳號</p>
           {GROK_PROVIDERS.map((p) => (

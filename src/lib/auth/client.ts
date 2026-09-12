@@ -25,6 +25,12 @@ export const authClient = createAuthClient({
       if (token) ctx.headers.set("Authorization", `Bearer ${token}`);
       return ctx;
     },
+    onError(ctx) {
+      // Cloudflare without a database: /api/auth/* may 500/503. Don't crash the UI.
+      if (ctx.error.status >= 500) {
+        ctx.error.message = "雲端登入暫時無法使用";
+      }
+    },
   },
 });
 
@@ -219,11 +225,15 @@ function waitForPopupToken(popup: Window): Promise<string | null> {
  * preview the local clear is sufficient, so it always resolves.
  */
 export async function signOut(redirectTo = "/"): Promise<void> {
+  const { isLocalAuthOnly, localSignOut } = await import("./local-account");
+  localSignOut();
+  if (isLocalAuthOnly()) {
+    window.location.href = redirectTo;
+    return;
+  }
   await runSignOut({
     livePreview: inLivePreview(),
     hasBearer: Boolean(getBearerToken()),
-    // Better Auth resolves with `{ error }` instead of rejecting, so surface a
-    // failed response as a rejection for the sequence to act on.
     requestSignOut: async () => {
       const { error } = await authClient.signOut();
       if (error) throw new Error(error.message ?? "Sign-out failed");

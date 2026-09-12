@@ -1,15 +1,24 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
+import { persistNameForUser } from "./local-account";
+import { useCurrentUserState } from "./use-current-user";
+import { useWordStore } from "@/lib/store";
 
-/**
- * App-wide client provider mounted once near the root (in `src/routes/__root.tsx`):
- *
- *   <AuthProvider><Outlet /></AuthProvider>
- *
- * Better Auth's React client (`@/lib/auth/client`) needs NO context provider —
- * its `useSession()` works standalone — so this is a passthrough today. It's
- * kept as the single, stable mount point for any future client-side providers
- * (e.g. a toast or theme provider) without churning the root shell.
- */
+function LocalBookScope() {
+  const { user, isPending } = useCurrentUserState();
+  useEffect(() => {
+    if (isPending) return;
+    const name = persistNameForUser(user && !user.isDevFallback ? user.id : null);
+    useWordStore.persist.setOptions({ name });
+    void useWordStore.persist.rehydrate();
+  }, [isPending, user]);
+  return null;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  return <>{children}</>;
+  return (
+    <>
+      <LocalBookScope />
+      {children}
+    </>
+  );
 }
