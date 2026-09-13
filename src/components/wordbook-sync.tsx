@@ -5,6 +5,7 @@ import { loadWordbook, saveWordbook } from "@/lib/wordbook-api";
 
 export function WordbookSync() {
   const { user, isPending } = useCurrentUserState();
+  const userId = user && !user.isDevFallback ? user.id : null;
   const words = useWordStore((s) => s.words);
   const stats = useWordStore((s) => s.stats);
   const hydrateCloud = useWordStore((s) => s.hydrateCloud);
@@ -13,11 +14,11 @@ export function WordbookSync() {
 
   useEffect(() => {
     if (isPending) return;
-    if (!user) {
+    if (!userId) {
       readyForUser.current = null;
       return;
     }
-    if (readyForUser.current === user.id) return;
+    if (readyForUser.current === userId) return;
     let cancelled = false;
     void (async () => {
       try {
@@ -30,18 +31,18 @@ export function WordbookSync() {
           skipSave.current = true;
           hydrateCloud(cloud.words, cloud.stats);
         }
-        readyForUser.current = user.id;
+        readyForUser.current = userId;
       } catch {
-        readyForUser.current = user.id;
+        readyForUser.current = userId;
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [hydrateCloud, isPending, user]);
+  }, [hydrateCloud, isPending, userId]);
 
   useEffect(() => {
-    if (!user || readyForUser.current !== user.id) return;
+    if (!userId || readyForUser.current !== userId) return;
     if (skipSave.current) {
       skipSave.current = false;
       return;
@@ -50,7 +51,7 @@ export function WordbookSync() {
       void saveWordbook({ data: { words, stats } }).catch(() => {});
     }, 1400);
     return () => window.clearTimeout(timer);
-  }, [stats, user, words]);
+  }, [stats, userId, words]);
 
   return null;
 }

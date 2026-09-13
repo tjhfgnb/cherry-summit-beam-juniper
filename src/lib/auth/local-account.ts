@@ -84,16 +84,44 @@ function toUser(account: StoredAccount): LocalUser {
   };
 }
 
+let cachedUser: LocalUser | null = null;
+let cachedKey = "";
+
+/** Stable snapshot for useSyncExternalStore — must return the same reference if unchanged. */
 export function getLocalUser(): LocalUser | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(SESSION_KEY);
-    if (!raw) return null;
+    if (!raw) {
+      cachedUser = null;
+      cachedKey = "";
+      return null;
+    }
+    if (raw === cachedKey && cachedUser) return cachedUser;
     const session = JSON.parse(raw) as { userId?: string };
-    if (!session.userId) return null;
+    if (!session.userId) {
+      cachedUser = null;
+      cachedKey = raw;
+      return null;
+    }
     const account = readAccounts().find((a) => a.id === session.userId);
-    return account ? toUser(account) : null;
+    const next = account ? toUser(account) : null;
+    if (
+      cachedUser &&
+      next &&
+      cachedUser.id === next.id &&
+      cachedUser.displayName === next.displayName &&
+      cachedUser.primaryEmail === next.primaryEmail
+    ) {
+      cachedKey = raw;
+      return cachedUser;
+    }
+    cachedKey = raw;
+    cachedUser = next;
+    return cachedUser;
   } catch {
+    cachedUser = null;
+    cachedKey = "";
     return null;
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { authClient, authEnabled } from "./client";
 import { getLocalUser, subscribeLocalAuth } from "./local-account";
 
@@ -8,7 +8,6 @@ export type AppUser = {
   displayName: string | null;
   primaryEmail: string | null;
   profileImageUrl: string | null;
-  /** True when this is the sandbox/dev fallback (auth not configured). */
   isDevFallback: boolean;
 };
 
@@ -25,23 +24,10 @@ export type CurrentUserState = {
   isPending: boolean;
 };
 
-function toAppUser(user: {
-  id: string;
-  name?: string | null;
-  email?: string | null;
-  image?: string | null;
-}): AppUser {
-  return {
-    id: user.id,
-    displayName: user.name ?? null,
-    primaryEmail: user.email ?? null,
-    profileImageUrl: user.image ?? null,
-    isDevFallback: false,
-  };
-}
+const noLocalUser = () => null;
 
 export function useCurrentUserState(): CurrentUserState {
-  const local = useSyncExternalStore(subscribeLocalAuth, getLocalUser, () => null);
+  const local = useSyncExternalStore(subscribeLocalAuth, getLocalUser, noLocalUser);
 
   if (!authEnabled) return { user: DEV_USER, isPending: false };
 
@@ -52,30 +38,40 @@ export function useCurrentUserState(): CurrentUserState {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (local || !session.isPending) {
-      setGaveUp(false);
+      setGaveUp((v) => (v ? false : v));
       return;
     }
     const timer = window.setTimeout(() => setGaveUp(true), 1800);
     return () => window.clearTimeout(timer);
   }, [local, session.isPending]);
 
-  if (local) {
-    return {
-      user: {
+  const sessionUser = session.data?.user;
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const user = useMemo<AppUser | null>(() => {
+    if (local) {
+      return {
         id: local.id,
         displayName: local.displayName,
         primaryEmail: local.primaryEmail,
         profileImageUrl: null,
         isDevFallback: false,
-      },
-      isPending: false,
+      };
+    }
+    if (!sessionUser) return null;
+    return {
+      id: sessionUser.id,
+      displayName: sessionUser.name ?? null,
+      primaryEmail: sessionUser.email ?? null,
+      profileImageUrl: sessionUser.image ?? null,
+      isDevFallback: false,
     };
-  }
+  }, [local, sessionUser]);
 
-  const user = session.data?.user;
+  if (local) return { user, isPending: false };
+
   const failed = Boolean(session.error) || gaveUp;
   return {
-    user: user ? toAppUser(user) : null,
+    user,
     isPending: failed ? false : session.isPending,
   };
 }
