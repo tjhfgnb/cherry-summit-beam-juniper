@@ -4,6 +4,15 @@
     "/api/*"
   ],
   "exclude": [
-    "/*"
+    "/",
+    "/index.html",
+    "/add",
+    "/login",
+    "/practice",
+    "/translate",
+    "/assets/*",
+    "/favicon.svg",
+    "/og.jpg",
+    "/__grok/*"
   ]
 }

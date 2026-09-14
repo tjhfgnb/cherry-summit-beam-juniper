@@ -12,12 +12,13 @@ const databaseUrl =
 
 /** Cloudflare Workers/Pages — PGLite WASM cannot boot here. */
 function isCloudflareRuntime(): boolean {
+  // Detect the Worker isolate, not the Pages CI (Node) build.
+  // `CF_PAGES=1` is set during `npm run build` on Pages and must still allow
+  // PGLite so the SPA shell can prerender.
   if (typeof (globalThis as { HTMLRewriter?: unknown }).HTMLRewriter === "function") {
     return true;
   }
-  if (typeof process !== "undefined" && process.env.CF_PAGES === "1") return true;
-  const ua =
-    typeof navigator !== "undefined" ? navigator.userAgent : undefined;
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : undefined;
   return ua === "Cloudflare-Workers";
 }
 

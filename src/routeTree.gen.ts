@@ -14,6 +14,7 @@ import { Route as AddRouteImport } from './routes/add'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PracticeRouteImport } from './routes/practice'
 import { Route as TranslateRouteImport } from './routes/translate'
+import { Route as ApiWordbookRouteImport } from './routes/api/wordbook'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -41,6 +42,11 @@ const TranslateRoute = TranslateRouteImport.update({
   path: '/translate',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiWordbookRoute = ApiWordbookRouteImport.update({
+  id: '/api/wordbook',
+  path: '/api/wordbook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/practice': typeof PracticeRoute
   '/translate': typeof TranslateRoute
+  '/api/wordbook': typeof ApiWordbookRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/practice': typeof PracticeRoute
   '/translate': typeof TranslateRoute
+  '/api/wordbook': typeof ApiWordbookRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
@@ -70,14 +78,28 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/practice': typeof PracticeRoute
   '/translate': typeof TranslateRoute
+  '/api/wordbook': typeof ApiWordbookRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/add' | '/login' | '/practice' | '/translate' | '/api/auth/$'
+    | '/'
+    | '/add'
+    | '/login'
+    | '/practice'
+    | '/translate'
+    | '/api/wordbook'
+    | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/add' | '/login' | '/practice' | '/translate' | '/api/auth/$'
+  to:
+    | '/'
+    | '/add'
+    | '/login'
+    | '/practice'
+    | '/translate'
+    | '/api/wordbook'
+    | '/api/auth/$'
   id:
     | '__root__'
     | '/'
@@ -85,6 +107,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/practice'
     | '/translate'
+    | '/api/wordbook'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
@@ -94,6 +117,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PracticeRoute: typeof PracticeRoute
   TranslateRoute: typeof TranslateRoute
+  ApiWordbookRoute: typeof ApiWordbookRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -134,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TranslateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/wordbook': {
+      id: '/api/wordbook'
+      path: '/api/wordbook'
+      fullPath: '/api/wordbook'
+      preLoaderRoute: typeof ApiWordbookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -150,6 +181,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PracticeRoute: PracticeRoute,
   TranslateRoute: TranslateRoute,
+  ApiWordbookRoute: ApiWordbookRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

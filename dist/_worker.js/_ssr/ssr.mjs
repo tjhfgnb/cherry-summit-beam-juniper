@@ -109,7 +109,7 @@ var HEADERS = { TSS_SHELL: "X-TSS_SHELL" };
 * the dev styles URL for route-scoped CSS collection.
 */
 async function getStartManifest(matchedRoutes) {
-	const { tsrStartManifest } = await import("../_tanstack-start-manifest_v-nW-jz-QR.mjs");
+	const { tsrStartManifest } = await import("../_tanstack-start-manifest_v-CHdGySbR.mjs");
 	const startManifest = tsrStartManifest();
 	let routes = startManifest.routes;
 	routes[rootRouteId];
@@ -131,11 +131,11 @@ async function getStartManifest(matchedRoutes) {
 var manifest = {
 	"0d14523e6618b73b54fe4d38bb8d3b2d8fbb8257bc478a9d9ed337dae27a2a32": {
 		functionName: "loadWordbook_createServerFn_handler",
-		importer: () => import("./wordbook-api-1uGDbqoJ.mjs")
+		importer: () => import("./wordbook-api-CwaQTIYe.mjs")
 	},
 	"d25f0bc5354f36198a48cb5987f930174ed0edd85054852f223b96047c6ecd35": {
 		functionName: "saveWordbook_createServerFn_handler",
-		importer: () => import("./wordbook-api-1uGDbqoJ.mjs")
+		importer: () => import("./wordbook-api-CwaQTIYe.mjs")
 	}
 };
 async function getServerFnById(id, access) {
@@ -1405,7 +1405,7 @@ var getBaseManifest = getProdBaseManifest;
 var createEarlyHintsForRequest = createEarlyHintsCollector;
 async function loadEntries() {
 	const [routerEntry, startEntry, pluginAdapters] = await Promise.all([
-		import("./router-Btse5H2c.mjs").then((n) => n.t),
+		import("./router-Dzw7iLf_.mjs").then((n) => n.t),
 		import("./start-5Z2QO8AU.mjs"),
 		import("./empty-plugin-adapters-D9UWiqvJ.mjs")
 	]);

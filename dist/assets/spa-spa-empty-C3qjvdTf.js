@@ -1,0 +1,1 @@
+var e={handler:()=>new Response(`auth disabled`,{status:501})};export{e as auth};
