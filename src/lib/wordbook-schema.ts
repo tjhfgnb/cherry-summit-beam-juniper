@@ -10,6 +10,7 @@ const wordSchema = z.object({
   exampleZh: z.string().max(500).optional().default(""),
   note: z.string().max(500).optional().default(""),
   tags: z.array(z.string().max(40)).max(12).optional().default([]),
+  lesson: z.number().int().min(0).max(99).optional().default(0),
   starred: z.boolean().optional().default(false),
   ease: z.number().int().min(0).max(5).optional().default(0),
   intervalDays: z.number().int().min(0).max(3650).optional().default(0),

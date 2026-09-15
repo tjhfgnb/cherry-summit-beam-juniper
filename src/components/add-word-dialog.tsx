@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PosPicker } from "@/components/pos";
+import { LessonPicker } from "@/components/lesson-picker";
 import { lookupPhrase } from "@/lib/lookup";
 import { canonicalizePos } from "@/lib/pos";
 import { useWordStore } from "@/lib/store";
@@ -26,6 +27,7 @@ type Draft = {
   exampleEn: string;
   exampleZh: string;
   note: string;
+  lesson: number;
 };
 
 const empty: Draft = {
@@ -36,6 +38,7 @@ const empty: Draft = {
   exampleEn: "",
   exampleZh: "",
   note: "",
+  lesson: 0,
 };
 
 function fromWord(word: Word): Draft {
@@ -47,6 +50,7 @@ function fromWord(word: Word): Draft {
     exampleEn: word.exampleEn,
     exampleZh: word.exampleZh,
     note: word.note,
+    lesson: word.lesson ?? 0,
   };
 }
 
@@ -61,11 +65,13 @@ export function AddWordDialog({
   onOpenChange,
   editing,
   preset,
+  defaultLesson,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editing?: Word | null;
   preset?: Partial<Draft>;
+  defaultLesson?: number;
 }) {
   const [draft, setDraft] = useState<Draft>(empty);
   const [looking, setLooking] = useState(false);
@@ -75,8 +81,8 @@ export function AddWordDialog({
   useEffect(() => {
     if (!open) return;
     if (editing) setDraft(fromWord(editing));
-    else setDraft({ ...empty, ...preset });
-  }, [open, editing, preset]);
+    else setDraft({ ...empty, lesson: defaultLesson ?? 0, ...preset });
+  }, [open, editing, preset, defaultLesson]);
 
   function set<K extends keyof Draft>(key: K, value: Draft[K]) {
     setDraft((d) => ({ ...d, [key]: value }));
@@ -203,6 +209,11 @@ export function AddWordDialog({
           <div className="grid gap-1.5">
             <p className="text-sm font-medium text-ink-soft">詞性</p>
             <PosPicker value={draft.pos} onChange={(pos) => set("pos", pos)} />
+          </div>
+
+          <div className="grid gap-1.5">
+            <p className="text-sm font-medium text-ink-soft">課次</p>
+            <LessonPicker value={draft.lesson} onChange={(lesson) => set("lesson", lesson)} />
           </div>
 
           <div className="grid gap-1.5">

@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { canonicalizePos, formatPos, parsePos } from "./pos";
 import { mergeGloss } from "./bulk";
+import { clampLesson } from "./lesson";
 import type { NewWordInput, PracticeStats, Word } from "./types";
 import { buildSeedWords } from "./seed-words";
 import { bumpStreak, nextReview, type Quality } from "./srs";
@@ -91,6 +92,7 @@ export const useWordStore = create<WordState>()(
           exampleZh: input.exampleZh?.trim() ?? "",
           note: input.note?.trim() ?? "",
           tags: input.tags ?? [],
+          lesson: clampLesson(input.lesson ?? 0),
           starred: false,
           ease: 0,
           intervalDays: 0,
@@ -125,6 +127,7 @@ export const useWordStore = create<WordState>()(
                     phonetic: w.phonetic || input.phonetic?.trim() || "",
                     exampleEn: w.exampleEn || input.exampleEn?.trim() || "",
                     exampleZh: w.exampleZh || input.exampleZh?.trim() || "",
+                    lesson: w.lesson || clampLesson(input.lesson ?? 0),
                     updatedAt: Date.now(),
                   }
                 : w,
@@ -143,6 +146,7 @@ export const useWordStore = create<WordState>()(
               exampleZh: input.exampleZh?.trim() ?? "",
               note: input.note?.trim() ?? "",
               tags: input.tags ?? [],
+              lesson: clampLesson(input.lesson ?? 0),
               starred: false,
               ease: 0,
               intervalDays: 0,
@@ -166,10 +170,15 @@ export const useWordStore = create<WordState>()(
         return { added, merged, ids };
       },
       updateWord: (id, patch) => {
-        const next = patch.pos !== undefined ? { ...patch, pos: canonicalizePos(patch.pos) } : patch;
+        const next =
+          patch.pos !== undefined
+            ? { ...patch, pos: canonicalizePos(patch.pos) }
+            : patch;
+        const withLesson =
+          next.lesson !== undefined ? { ...next, lesson: clampLesson(next.lesson) } : next;
         set((s) => ({
           words: s.words.map((w) =>
-            w.id === id ? { ...w, ...next, id: w.id, updatedAt: Date.now() } : w,
+            w.id === id ? { ...w, ...withLesson, id: w.id, updatedAt: Date.now() } : w,
           ),
         }));
       },
@@ -239,7 +248,10 @@ export const useWordStore = create<WordState>()(
         });
       },
       hydrateCloud: (words, stats) => {
-        set({ words, stats });
+        set({
+          words: words.map((w) => ({ ...w, lesson: clampLesson(w.lesson ?? 0) })),
+          stats,
+        });
       },
     }),
     {
@@ -253,9 +265,14 @@ export const useWordStore = create<WordState>()(
       }),
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<Pick<WordState, "words" | "stats">>;
+        const words = (p.words ?? current.words).map((w) => ({
+          ...w,
+          lesson: clampLesson(w.lesson ?? 0),
+        }));
         return {
           ...current,
           ...p,
+          words,
           selectedIds: current.selectedIds,
         };
       },

@@ -1,4 +1,5 @@
 import { formatPos, parsePos, type PosKey } from "./pos";
+import { clampLesson, parseLessonHeader, stripInlineLesson } from "./lesson";
 
 export type BulkGroup = {
   en: string;
@@ -6,6 +7,7 @@ export type BulkGroup = {
   pos: string;
   posKeys: PosKey[];
   count: number;
+  lesson: number;
 };
 
 export type BulkParse = {
@@ -69,15 +71,25 @@ function splitEnZh(rest: string): { en: string; zh: string } {
   return { en: rest.trim(), zh: "" };
 }
 
-export function parseBulkText(raw: string): BulkParse {
+export function parseBulkText(raw: string, fallbackLesson = 0): BulkParse {
   const groups = new Map<string, BulkGroup>();
   const skipped: BulkParse["skipped"] = [];
+  let currentLesson = clampLesson(fallbackLesson);
 
   for (const original of raw.split(/\r?\n/)) {
     const line = original.trim();
-    if (!line || line.startsWith("#") || line.startsWith("//")) continue;
+    if (!line || line.startsWith("//")) continue;
 
-    const { rest, keys } = pullPos(line);
+    const header = parseLessonHeader(line);
+    if (header !== null) {
+      currentLesson = header;
+      continue;
+    }
+    if (line.startsWith("#")) continue;
+
+    const inline = stripInlineLesson(line);
+    const { rest, keys } = pullPos(inline.rest);
+    const lesson = inline.lesson ?? currentLesson;
     if (!rest) {
       skipped.push({ line, reason: "這行只有詞性，沒有單字" });
       continue;
@@ -107,6 +119,7 @@ export function parseBulkText(raw: string): BulkParse {
       prev.posKeys = uniquePos([...prev.posKeys, ...keys]);
       prev.pos = formatPos(prev.posKeys);
       prev.count += 1;
+      if (!prev.lesson && lesson) prev.lesson = lesson;
     } else {
       groups.set(key, {
         en,
@@ -114,6 +127,7 @@ export function parseBulkText(raw: string): BulkParse {
         posKeys: keys,
         pos: formatPos(keys),
         count: 1,
+        lesson,
       });
     }
   }

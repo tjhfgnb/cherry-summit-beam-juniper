@@ -10,6 +10,7 @@ export type Word = {
   exampleZh: string;
   note: string;
   tags: string[];
+  lesson: number;
   starred: boolean;
   ease: number;
   intervalDays: number;
@@ -32,6 +33,7 @@ export type NewWordInput = {
   note?: string;
   tags?: string[];
   source?: WordSource;
+  lesson?: number;
 };
 
 export type PracticeStats = {

@@ -4,13 +4,23 @@ import { Languages, LoaderCircle, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { lookupPhrase } from "@/lib/lookup";
+import { formatLesson } from "@/lib/lesson";
 import { useWordStore } from "@/lib/store";
+import { LessonPicker } from "@/components/lesson-picker";
 
 function hasCjk(text: string) {
   return /[\u3400-\u9fff]/.test(text);
 }
 
-export function QuickAdd({ onManual }: { onManual: (preset?: string) => void }) {
+export function QuickAdd({
+  onManual,
+  lesson,
+  onLessonChange,
+}: {
+  onManual: (preset?: string) => void;
+  lesson: number;
+  onLessonChange: (n: number) => void;
+}) {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const addWord = useWordStore((s) => s.addWord);
@@ -37,6 +47,7 @@ export function QuickAdd({ onManual }: { onManual: (preset?: string) => void }) 
             exampleEn: partial.examples[0]?.en,
             exampleZh: partial.examples[0]?.zh,
             source: "translate" as const,
+            lesson,
           };
           if (!savedId) {
             const { word, duplicated } = addWord(payload);
@@ -76,7 +87,11 @@ export function QuickAdd({ onManual }: { onManual: (preset?: string) => void }) 
     >
       <label htmlFor="quick-add" className="text-sm font-medium text-ink-soft">
         快速加入
+        {lesson > 0 ? ` · ${formatLesson(lesson)}` : ""}
       </label>
+      <div className="mt-2">
+        <LessonPicker value={lesson} onChange={onLessonChange} />
+      </div>
       <div className="mt-2 flex flex-col gap-2 sm:flex-row">
         <Input
           id="quick-add"

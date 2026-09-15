@@ -5,23 +5,29 @@ import { ListPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { PosBadge } from "@/components/pos";
+import { LessonPicker } from "@/components/lesson-picker";
+import { Badge } from "@/components/ui/badge";
 import { parseBulkText } from "@/lib/bulk";
+import { formatLesson } from "@/lib/lesson";
 import { POS_OPTIONS } from "@/lib/pos";
 import { useWordStore } from "@/lib/store";
 
 export const Route = createFileRoute("/add")({ component: BulkAddPage });
 
-const SAMPLE = `apple (n) 蘋果
+const SAMPLE = `第1課
+apple (n) 蘋果
+book (n) 書
+
+第2課
 run (v) 跑
-run (n) 跑步
 beautiful (adj) 美麗的
-quickly (adv) 很快地
-look forward to (phr) 期待`;
+quickly (adv) 很快地`;
 
 function BulkAddPage() {
   const [text, setText] = useState("");
+  const [fallbackLesson, setFallbackLesson] = useState(0);
   const importMany = useWordStore((s) => s.importMany);
-  const parsed = useMemo(() => parseBulkText(text), [text]);
+  const parsed = useMemo(() => parseBulkText(text, fallbackLesson), [text, fallbackLesson]);
 
   function onImport() {
     if (!parsed.groups.length) {
@@ -33,7 +39,8 @@ function BulkAddPage() {
         en: g.en,
         zh: g.zh,
         pos: g.pos,
-        source: "manual",
+        lesson: g.lesson,
+        source: "manual" as const,
       })),
     );
     toast(
@@ -48,8 +55,9 @@ function BulkAddPage() {
         <p className="text-xs uppercase tracking-widest text-faint">Batch add</p>
         <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">速加</h1>
         <p className="mt-2 max-w-prose text-sm text-muted">
-          一次貼很多行。用括號標詞性，例如 <span className="text-ink">(n)</span>{" "}
-          名詞、<span className="text-ink">(v)</span> 動詞。同一個英文會自動併成一張卡片。
+          一次貼很多行。單獨一行寫 <span className="text-ink">第1課</span>、
+          <span className="text-ink">第2課</span>，後面的單字會歸到那一課。用括號標詞性，例如{" "}
+          <span className="text-ink">(n)</span> 名詞。
         </p>
       </header>
 
@@ -62,6 +70,11 @@ function BulkAddPage() {
             <span className="font-display">({item.key})</span> {item.zh}
           </span>
         ))}
+      </div>
+
+      <div className="mb-4 rounded-xl bg-surface p-3 shadow-card sm:p-4">
+        <p className="text-sm font-medium text-ink-soft">沒寫課次時，放到</p>
+        <LessonPicker className="mt-2" value={fallbackLesson} onChange={setFallbackLesson} />
       </div>
 
       <label htmlFor="bulk-input" className="text-sm font-medium text-ink-soft">
@@ -80,12 +93,7 @@ function BulkAddPage() {
           <ListPlus className="size-4" />
           {parsed.groups.length ? `加入 ${parsed.groups.length} 個單字` : "加入單字本"}
         </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => setText(SAMPLE)}
-        >
+        <Button type="button" variant="ghost" size="sm" onClick={() => setText(SAMPLE)}>
           填入範例
         </Button>
         {text ? (
@@ -102,15 +110,13 @@ function BulkAddPage() {
           </h2>
           <ul className="mt-3 space-y-2">
             {parsed.groups.map((group) => (
-              <li
-                key={group.en}
-                className="rounded-xl bg-surface px-4 py-3 shadow-card"
-              >
+              <li key={group.en} className="rounded-xl bg-surface px-4 py-3 shadow-card">
                 <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                   <span className="font-display text-xl font-semibold tracking-tight">
                     {group.en}
                   </span>
                   {group.pos ? <PosBadge pos={group.pos} /> : null}
+                  {group.lesson > 0 ? <Badge>{formatLesson(group.lesson)}</Badge> : null}
                   {group.count > 1 ? (
                     <span className="text-xs text-muted">合併 {group.count} 行</span>
                   ) : null}
@@ -142,7 +148,7 @@ function BulkAddPage() {
           <Link to="/practice" className="text-accent underline-offset-2 hover:underline">
             練習
           </Link>{" "}
-          直接考這些。
+          直接考這一課。
         </p>
       ) : null}
     </div>

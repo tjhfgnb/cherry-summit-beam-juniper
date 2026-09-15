@@ -31,6 +31,7 @@ function Home() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Word | null>(null);
   const [presetEn, setPresetEn] = useState("");
+  const [lesson, setLesson] = useState(0);
 
   const due = words.filter((w) => isDue(w)).length;
   const mastered = words.filter((w) => w.ease >= 4).length;
@@ -52,7 +53,7 @@ function Home() {
         <p className="text-xs uppercase tracking-widest text-faint">{greeting()}</p>
         <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">單字本</h1>
         <p className="mt-2 max-w-prose text-sm text-muted">
-          點一列就能圈選要考的單字，再按「考這些」。也可以翻譯或自己填。
+          點一列就能圈選要考的單字，再按「考這些」。可依第1課、第2課分組。
         </p>
       </header>
 
@@ -75,7 +76,7 @@ function Home() {
         ) : null}
       </div>
 
-      <QuickAdd onManual={openManual} />
+      <QuickAdd onManual={openManual} lesson={lesson} onLessonChange={setLesson} />
       <p className="mt-2 text-sm text-muted">
         要一次貼很多？到{" "}
         <Link to="/add" className="text-accent underline-offset-2 hover:underline">
@@ -115,6 +116,7 @@ function Home() {
 
       <AddWordDialog
         open={dialogOpen}
+        defaultLesson={lesson}
         onOpenChange={(open) => {
           setDialogOpen(open);
           if (!open) {

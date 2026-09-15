@@ -213,6 +213,7 @@ export function buildSeedWords(now = Date.now()): Word[] {
     id: `seed-${item.en.replace(/\s+/g, "-")}`,
     ...item,
     note: "",
+    lesson: 0,
     starred: false,
     ease: 0,
     intervalDays: 0,

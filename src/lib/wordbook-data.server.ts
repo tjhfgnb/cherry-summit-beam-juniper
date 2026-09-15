@@ -13,6 +13,7 @@ type WordRow = {
   example_zh: string;
   note: string;
   tags: string;
+  lesson: number;
   starred: boolean | number;
   ease: number;
   interval_days: number;
@@ -48,6 +49,7 @@ function rowToWord(row: WordRow): Word {
     exampleZh: row.example_zh ?? "",
     note: row.note ?? "",
     tags: parseTags(row.tags ?? "[]"),
+    lesson: Number(row.lesson) || 0,
     starred: Boolean(row.starred),
     ease: Number(row.ease) || 0,
     intervalDays: Number(row.interval_days) || 0,
@@ -65,7 +67,7 @@ export async function loadWordbookData(userId: string): Promise<WordbookSnapshot
   const { getSql } = await import("@/lib/db");
   const sql = await getSql();
   const rows = await sql<WordRow>`
-    select id, en, zh, phonetic, pos, example_en, example_zh, note, tags,
+    select id, en, zh, phonetic, pos, example_en, example_zh, note, tags, lesson,
            starred, ease, interval_days, next_review_at, review_count,
            correct_count, wrong_count, created_at, updated_at, source
     from words
@@ -100,13 +102,13 @@ export async function saveWordbookData(userId: string, data: WordbookSnapshot) {
   for (const word of data.words) {
     await sql`
       insert into words (
-        id, user_id, en, zh, phonetic, pos, example_en, example_zh, note, tags,
+        id, user_id, en, zh, phonetic, pos, example_en, example_zh, note, tags, lesson,
         starred, ease, interval_days, next_review_at, review_count,
         correct_count, wrong_count, created_at, updated_at, source
       ) values (
         ${word.id}, ${userId}, ${word.en}, ${word.zh}, ${word.phonetic},
         ${word.pos}, ${word.exampleEn}, ${word.exampleZh}, ${word.note},
-        ${JSON.stringify(word.tags)}, ${word.starred}, ${word.ease},
+        ${JSON.stringify(word.tags)}, ${word.lesson ?? 0}, ${word.starred}, ${word.ease},
         ${word.intervalDays}, ${word.nextReviewAt}, ${word.reviewCount},
         ${word.correctCount}, ${word.wrongCount}, ${word.createdAt},
         ${word.updatedAt}, ${word.source}
