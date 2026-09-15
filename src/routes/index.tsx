@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
-import { RotateCcw, Search } from "lucide-react";
+import { RotateCcw, Search, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { AddWordDialog } from "@/components/add-word-dialog";
 import { QuickAdd } from "@/components/quick-add";
 import { WordList } from "@/components/word-list";
@@ -25,13 +26,20 @@ function greeting() {
 function Home() {
   const words = useWordStore((s) => s.words);
   const stats = useWordStore((s) => s.stats);
-  const selectedCount = useWordStore((s) => s.selectedIds.length);
+  const selectedIds = useWordStore((s) => s.selectedIds);
+  const selectedCount = selectedIds.length;
   const restoreSeed = useWordStore((s) => s.restoreSeed);
+  const removeMany = useWordStore((s) => s.removeMany);
   const [query, setQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Word | null>(null);
   const [presetEn, setPresetEn] = useState("");
   const [lesson, setLesson] = useState(0);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  useEffect(() => {
+    setConfirmDelete(false);
+  }, [selectedCount]);
 
   const due = words.filter((w) => isDue(w)).length;
   const mastered = words.filter((w) => w.ease >= 4).length;
@@ -68,6 +76,26 @@ function Home() {
           <Link to="/practice">
             {selectedCount > 0 ? `考這 ${selectedCount} 個` : "開始練習"}
           </Link>
+        </Button>
+        <Button
+          type="button"
+          variant="danger"
+          onClick={() => {
+            if (selectedCount === 0) {
+              toast("先圈選要刪的單字，再按一鍵刪除");
+              return;
+            }
+            if (!confirmDelete) {
+              setConfirmDelete(true);
+              return;
+            }
+            const n = removeMany(selectedIds);
+            setConfirmDelete(false);
+            toast(`已刪除 ${n} 個單字`);
+          }}
+        >
+          <Trash2 className="size-4" />
+          {confirmDelete ? `確定刪除 ${selectedCount} 個` : "一鍵刪除"}
         </Button>
         {mastered > 0 ? (
           <p className="self-center text-sm text-muted">
