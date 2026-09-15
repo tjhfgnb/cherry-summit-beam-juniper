@@ -17,6 +17,7 @@ type WordState = {
   importMany: (items: NewWordInput[]) => { added: number; merged: number; ids: string[] };
   updateWord: (id: string, patch: Partial<Word>) => void;
   removeWord: (id: string) => void;
+  removeMany: (ids: string[]) => number;
   toggleStar: (id: string) => void;
   toggleSelected: (id: string) => void;
   setSelected: (ids: string[]) => void;
@@ -187,6 +188,15 @@ export const useWordStore = create<WordState>()(
           words: s.words.filter((w) => w.id !== id),
           selectedIds: s.selectedIds.filter((x) => x !== id),
         }));
+      },
+      removeMany: (ids) => {
+        const drop = new Set(ids);
+        const before = get().words.length;
+        set((s) => ({
+          words: s.words.filter((w) => !drop.has(w.id)),
+          selectedIds: s.selectedIds.filter((x) => !drop.has(x)),
+        }));
+        return before - get().words.length;
       },
       toggleStar: (id) => {
         set((s) => ({

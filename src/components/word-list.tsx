@@ -1,6 +1,7 @@
-import { useMemo, useState, type PointerEvent } from "react";
+import { useEffect, useMemo, useState, type PointerEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, Pencil, Star, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SelectCircle } from "@/components/select-circle";
@@ -46,10 +47,17 @@ export function WordList({
   const setSelected = useWordStore((s) => s.setSelected);
   const clearSelected = useWordStore((s) => s.clearSelected);
   const removeWord = useWordStore((s) => s.removeWord);
+  const removeMany = useWordStore((s) => s.removeMany);
   const [filter, setFilter] = useState<Filter>("all");
   const [lessonFilter, setLessonFilter] = useState<LessonFilter>("all");
   const [openId, setOpenId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [confirmBulk, setConfirmBulk] = useState(false);
+  const [confirmLesson, setConfirmLesson] = useState<string | null>(null);
+
+  useEffect(() => {
+    setConfirmBulk(false);
+  }, [selectedIds]);
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const lessons = useMemo(() => uniqueLessons(words.map(lessonOf)), [words]);
@@ -214,6 +222,7 @@ export function WordList({
                       {section.items.length}
                     </span>
                   </h2>
+                  <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
                   <button
                     type="button"
                     className="h-9 rounded-full px-3 text-sm font-medium text-accent hover:bg-accent-soft/70"
@@ -230,6 +239,28 @@ export function WordList({
                   >
                     {section.items.every((w) => selectedSet.has(w.id)) ? "取消本課" : "圈選本課"}
                   </button>
+                  {confirmLesson === section.key ? (
+                    <button
+                      type="button"
+                      className="h-9 rounded-full bg-danger px-3 text-sm font-medium text-accent-fg"
+                      onClick={() => {
+                        const n = removeMany(section.items.map((w) => w.id));
+                        setConfirmLesson(null);
+                        toast(`已刪除 ${n} 個單字`);
+                      }}
+                    >
+                      確定刪除本課
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="h-9 rounded-full px-3 text-sm font-medium text-danger hover:bg-accent-soft/70"
+                      onClick={() => setConfirmLesson(section.key)}
+                    >
+                      刪除本課
+                    </button>
+                  )}
+                  </div>
                 </div>
               ) : null}
               <ul className="space-y-2">
@@ -395,10 +426,39 @@ export function WordList({
               variant="ghost"
               size="sm"
               className="pointer-events-auto text-accent-fg/80 hover:bg-accent-fg/10 hover:text-accent-fg"
-              onClick={clearSelected}
+              onClick={() => {
+                setConfirmBulk(false);
+                clearSelected();
+              }}
             >
               清除
             </Button>
+            {confirmBulk ? (
+              <Button
+                type="button"
+                variant="danger"
+                size="sm"
+                className="pointer-events-auto"
+                onClick={() => {
+                  const n = removeMany(selectedIds);
+                  setConfirmBulk(false);
+                  toast(`已刪除 ${n} 個單字`);
+                }}
+              >
+                確定刪除 {selectedIds.length} 個
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="pointer-events-auto text-accent-fg hover:bg-accent-fg/10"
+                onClick={() => setConfirmBulk(true)}
+              >
+                <Trash2 className="size-3.5" />
+                刪除
+              </Button>
+            )}
             <Button asChild size="sm" className="pointer-events-auto bg-accent-fg text-ink hover:bg-accent-fg/90">
               <Link to="/practice">考這些</Link>
             </Button>
