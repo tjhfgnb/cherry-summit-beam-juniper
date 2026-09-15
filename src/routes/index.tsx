@@ -53,7 +53,7 @@ function Home() {
         <p className="text-xs uppercase tracking-widest text-faint">{greeting()}</p>
         <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">單字本</h1>
         <p className="mt-2 max-w-prose text-sm text-muted">
-          點一列就能圈選要考的單字，再按「考這些」。可依第1課、第2課分組。
+          點一列圈選後，可「考這些」或「一鍵刪除」。也可依第1課、第2課分組。
         </p>
       </header>
 

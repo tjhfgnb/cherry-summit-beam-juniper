@@ -204,6 +204,30 @@ export function WordList({
                 : `全選${typeof lessonFilter === "number" ? formatLesson(lessonFilter) : "未分課"}`}
           </button>
         ) : null}
+        {filtered.length > 0 && lessonFilter !== "all" ? (
+          confirmLesson === "visible" ? (
+            <button
+              type="button"
+              className="h-9 rounded-full bg-danger px-3 text-sm font-medium text-accent-fg"
+              onClick={() => {
+                const n = removeMany(visibleIds);
+                setConfirmLesson(null);
+                toast(`已刪除 ${n} 個單字`);
+              }}
+            >
+              確定刪除 {filtered.length} 個
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="h-9 rounded-full px-3 text-sm font-medium text-danger hover:bg-accent-soft/70"
+              onClick={() => setConfirmLesson("visible")}
+            >
+              一鍵刪除
+              {typeof lessonFilter === "number" ? formatLesson(lessonFilter) : "未分課"}
+            </button>
+          )
+        ) : null}
       </div>
 
       {filtered.length === 0 ? (
@@ -257,7 +281,7 @@ export function WordList({
                       className="h-9 rounded-full px-3 text-sm font-medium text-danger hover:bg-accent-soft/70"
                       onClick={() => setConfirmLesson(section.key)}
                     >
-                      刪除本課
+                      一鍵刪除本課
                     </button>
                   )}
                   </div>
@@ -450,13 +474,13 @@ export function WordList({
             ) : (
               <Button
                 type="button"
-                variant="ghost"
+                variant="danger"
                 size="sm"
-                className="pointer-events-auto text-accent-fg hover:bg-accent-fg/10"
+                className="pointer-events-auto"
                 onClick={() => setConfirmBulk(true)}
               >
                 <Trash2 className="size-3.5" />
-                刪除
+                一鍵刪除
               </Button>
             )}
             <Button asChild size="sm" className="pointer-events-auto bg-accent-fg text-ink hover:bg-accent-fg/90">
