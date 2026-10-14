@@ -9,6 +9,7 @@ import { LessonPicker } from "@/components/lesson-picker";
 import { Badge } from "@/components/ui/badge";
 import { parseBulkText } from "@/lib/bulk";
 import { formatLesson } from "@/lib/lesson";
+import { senseAmong } from "@/lib/sense";
 import { POS_OPTIONS } from "@/lib/pos";
 import { useWordStore } from "@/lib/store";
 
@@ -56,7 +57,7 @@ function BulkAddPage() {
         <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">速加</h1>
         <p className="mt-2 max-w-prose text-sm text-muted">
           一次貼很多行。單獨一行寫 <span className="text-ink">第1課</span>、
-          <span className="text-ink">第2課</span>，後面的單字會歸到那一課。用括號標詞性，例如{" "}
+          <span className="text-ink">第2課</span>，後面的單字會歸到那一課。同一英文的形容詞、副詞會分開並標 1、2。用括號標詞性，例如{" "}
           <span className="text-ink">(n)</span> 名詞。
         </p>
       </header>
@@ -109,11 +110,18 @@ function BulkAddPage() {
             預覽 · {parsed.groups.length} 張卡片
           </h2>
           <ul className="mt-3 space-y-2">
-            {parsed.groups.map((group) => (
-              <li key={group.en} className="rounded-xl bg-surface px-4 py-3 shadow-card">
+            {parsed.groups.map((group) => {
+              const sense = senseAmong(group, parsed.groups);
+              return (
+              <li key={`${group.en}-${group.pos}`} className="rounded-xl bg-surface px-4 py-3 shadow-card">
                 <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                   <span className="font-display text-xl font-semibold tracking-tight">
                     {group.en}
+                    {sense ? (
+                      <span className="ml-1 align-super text-sm font-sans tabular-nums text-accent">
+                        {sense}
+                      </span>
+                    ) : null}
                   </span>
                   {group.pos ? <PosBadge pos={group.pos} /> : null}
                   {group.lesson > 0 ? <Badge>{formatLesson(group.lesson)}</Badge> : null}
@@ -123,7 +131,8 @@ function BulkAddPage() {
                 </div>
                 <p className="mt-0.5 text-sm text-ink-soft">{group.zh}</p>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </section>
       ) : null}

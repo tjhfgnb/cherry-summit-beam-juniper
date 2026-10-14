@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import { SelectCircle } from "@/components/select-circle";
 import { Input } from "@/components/ui/input";
 import type { Word } from "@/lib/types";
+import { senseNumber } from "@/lib/sense";
 import { cn } from "@/lib/utils";
 
 export function WordPicker({
@@ -102,6 +103,11 @@ export function WordPicker({
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-display text-base font-semibold tracking-tight">
                       {word.en}
+                      {senseNumber(word, words) ? (
+                        <span className="ml-1 align-super text-xs font-sans font-semibold tabular-nums text-accent">
+                          {senseNumber(word, words)}
+                        </span>
+                      ) : null}
                     </span>
                     <span className="block truncate text-sm text-muted">{word.zh}</span>
                   </span>

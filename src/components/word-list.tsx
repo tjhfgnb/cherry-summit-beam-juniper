@@ -8,6 +8,7 @@ import { SelectCircle } from "@/components/select-circle";
 import { SpeakButton } from "@/components/speak-button";
 import { PosBadge } from "@/components/pos";
 import { formatLesson, uniqueLessons } from "@/lib/lesson";
+import { senseNumber } from "@/lib/sense";
 import { isDue, reviewLabel } from "@/lib/srs";
 import { useWordStore } from "@/lib/store";
 import type { Word } from "@/lib/types";
@@ -291,6 +292,7 @@ export function WordList({
                 {section.items.map((word) => {
                   const open = openId === word.id;
                   const picked = selectedSet.has(word.id);
+                  const sense = senseNumber(word, words);
                   return (
                     <li key={word.id}>
                       <article
@@ -321,6 +323,11 @@ export function WordList({
                                 <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                                   <span className="font-display text-xl font-semibold tracking-tight text-ink">
                                     {word.en}
+                                    {sense ? (
+                                      <span className="ml-1 align-super text-sm font-sans font-semibold tabular-nums text-accent">
+                                        {sense}
+                                      </span>
+                                    ) : null}
                                   </span>
                                   {word.pos ? <PosBadge pos={word.pos} /> : null}
                                   {lessonFilter === "all" && lessonOf(word) > 0 && !section.title ? (

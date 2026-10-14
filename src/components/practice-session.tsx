@@ -7,6 +7,7 @@ import { PosBadge } from "@/components/pos";
 import { WordPicker } from "@/components/word-picker";
 import { EN_DISTRACTORS, ZH_DISTRACTORS } from "@/lib/seed-words";
 import { isDue, type Quality } from "@/lib/srs";
+import { senseNumber } from "@/lib/sense";
 import { useWordStore } from "@/lib/store";
 import type { Word } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -167,6 +168,8 @@ export function PracticeSession({
 
   const prompt = direction === "en-zh" ? word.en : word.zh;
   const answer = direction === "en-zh" ? word.zh : word.en;
+  const sense =
+    direction === "en-zh" ? senseNumber(word, useWordStore.getState().words) : null;
   const progress = ((index + 1) / deck.length) * 100;
 
   return (
@@ -191,6 +194,7 @@ export function PracticeSession({
           <FlashCard
             word={word}
             prompt={prompt}
+            sense={sense}
             answer={answer}
             direction={direction}
             flipped={flipped}
@@ -205,6 +209,7 @@ export function PracticeSession({
           <QuizCard
             word={word}
             prompt={prompt}
+            sense={sense}
             answer={answer}
             direction={direction}
             options={options}
@@ -255,6 +260,7 @@ function EmptyPractice({ onExit }: { onExit: () => void }) {
 function FlashCard({
   word,
   prompt,
+  sense,
   answer,
   direction,
   flipped,
@@ -263,6 +269,7 @@ function FlashCard({
 }: {
   word: Word;
   prompt: string;
+  sense: number | null;
   answer: string;
   direction: Direction;
   flipped: boolean;
@@ -297,6 +304,11 @@ function FlashCard({
                   )}
                 >
                   {prompt}
+                  {sense ? (
+                    <span className="ml-2 align-super text-lg font-sans tabular-nums text-accent">
+                      {sense}
+                    </span>
+                  ) : null}
                 </p>
                 {word.pos ? <PosBadge pos={word.pos} className="mt-3 justify-center" /> : null}
                 {direction === "en-zh" && word.phonetic ? (
@@ -346,6 +358,7 @@ function FlashCard({
 function QuizCard({
   word,
   prompt,
+  sense,
   answer,
   direction,
   options,
@@ -354,6 +367,7 @@ function QuizCard({
 }: {
   word: Word;
   prompt: string;
+  sense: number | null;
   answer: string;
   direction: Direction;
   options: string[];
@@ -373,6 +387,11 @@ function QuizCard({
         )}
       >
         {prompt}
+        {sense ? (
+          <span className="ml-2 align-super text-lg font-sans tabular-nums text-accent">
+            {sense}
+          </span>
+        ) : null}
       </p>
       {word.pos ? <PosBadge pos={word.pos} className="mt-2" /> : null}
       <div className="mt-6 grid gap-2">

@@ -112,7 +112,7 @@ export function parseBulkText(raw: string, fallbackLesson = 0): BulkParse {
       continue;
     }
 
-    const key = en.toLowerCase();
+    const key = `${en.toLowerCase()}|${keys.slice().sort().join(",")}`;
     const prev = groups.get(key);
     if (prev) {
       prev.zh = mergeGloss(prev.zh, zh);

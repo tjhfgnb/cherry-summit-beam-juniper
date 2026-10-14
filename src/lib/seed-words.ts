@@ -1,4 +1,5 @@
 import type { Word } from "./types";
+import { splitStoredWords } from "./sense";
 
 type Seed = Pick<
   Word,
@@ -209,20 +210,22 @@ export const EN_DISTRACTORS = [
 ];
 
 export function buildSeedWords(now = Date.now()): Word[] {
-  return SEED.map((item) => ({
-    id: `seed-${item.en.replace(/\s+/g, "-")}`,
-    ...item,
-    note: "",
-    lesson: 0,
-    starred: false,
-    ease: 0,
-    intervalDays: 0,
-    nextReviewAt: 0,
-    reviewCount: 0,
-    correctCount: 0,
-    wrongCount: 0,
-    createdAt: now,
-    updatedAt: now,
-    source: "seed" as const,
-  }));
+  return splitStoredWords(
+    SEED.map((item) => ({
+      id: `seed-${item.en.replace(/\s+/g, "-")}`,
+      ...item,
+      note: "",
+      lesson: 0,
+      starred: false,
+      ease: 0,
+      intervalDays: 0,
+      nextReviewAt: 0,
+      reviewCount: 0,
+      correctCount: 0,
+      wrongCount: 0,
+      createdAt: now,
+      updatedAt: now,
+      source: "seed" as const,
+    })),
+  );
 }

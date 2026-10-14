@@ -1,8 +1,9 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { canonicalizePos, formatPos, parsePos } from "./pos";
+import { canonicalizePos } from "./pos";
 import { mergeGloss } from "./bulk";
 import { clampLesson } from "./lesson";
+import { entryKey, expandByPos, splitStoredWords } from "./sense";
 import type { NewWordInput, PracticeStats, Word } from "./types";
 import { buildSeedWords } from "./seed-words";
 import { bumpStreak, nextReview, type Quality } from "./srs";
@@ -61,52 +62,56 @@ export const useWordStore = create<WordState>()(
       stats: emptyStats,
       selectedIds: [],
       addWord: (input) => {
-        const en = normalizeEn(input.en);
-        const zh = input.zh.trim();
-        if (!en || !zh) {
-          throw new Error("需要英文與中文");
-        }
-        const existing = get().words.find(
-          (w) => w.en.toLowerCase() === en.toLowerCase(),
-        );
-        if (existing) {
-          const patch: Partial<Word> = { updatedAt: Date.now() };
-          if (zh) patch.zh = mergeGloss(existing.zh, zh);
-          if (input.phonetic && !existing.phonetic) patch.phonetic = input.phonetic;
-          if (input.exampleEn && !existing.exampleEn) patch.exampleEn = input.exampleEn;
-          if (input.exampleZh && !existing.exampleZh) patch.exampleZh = input.exampleZh;
-          if (input.pos) {
-            patch.pos = formatPos([...parsePos(existing.pos), ...parsePos(input.pos)]);
+        const pieces = expandByPos({
+          ...input,
+          en: normalizeEn(input.en),
+          zh: input.zh.trim(),
+        }).filter((item) => item.en && item.zh);
+        if (!pieces.length) throw new Error("需要英文與中文");
+        let last: AddResult | null = null;
+        for (const piece of pieces) {
+          const existing = get().words.find(
+            (w) => entryKey(w.en, w.pos) === entryKey(piece.en, piece.pos ?? ""),
+          );
+          if (existing) {
+            const patch: Partial<Word> = { updatedAt: Date.now() };
+            if (piece.zh) patch.zh = mergeGloss(existing.zh, piece.zh);
+            if (piece.phonetic && !existing.phonetic) patch.phonetic = piece.phonetic;
+            if (piece.exampleEn && !existing.exampleEn) patch.exampleEn = piece.exampleEn;
+            if (piece.exampleZh && !existing.exampleZh) patch.exampleZh = piece.exampleZh;
+            if (piece.pos) patch.pos = canonicalizePos(piece.pos);
+            get().updateWord(existing.id, patch);
+            const updated = get().words.find((w) => w.id === existing.id) ?? existing;
+            last = { word: updated, duplicated: true };
+            continue;
           }
-          get().updateWord(existing.id, patch);
-          const updated = get().words.find((w) => w.id === existing.id) ?? existing;
-          return { word: updated, duplicated: true };
+          const now = Date.now();
+          const word: Word = {
+            id: makeId(),
+            en: piece.en,
+            zh: piece.zh,
+            phonetic: piece.phonetic?.trim() ?? "",
+            pos: canonicalizePos(piece.pos ?? ""),
+            exampleEn: piece.exampleEn?.trim() ?? "",
+            exampleZh: piece.exampleZh?.trim() ?? "",
+            note: piece.note?.trim() ?? "",
+            tags: piece.tags ?? [],
+            lesson: clampLesson(piece.lesson ?? 0),
+            starred: false,
+            ease: 0,
+            intervalDays: 0,
+            nextReviewAt: 0,
+            reviewCount: 0,
+            correctCount: 0,
+            wrongCount: 0,
+            createdAt: now,
+            updatedAt: now,
+            source: piece.source ?? "manual",
+          };
+          set((s) => ({ words: [word, ...s.words] }));
+          last = { word, duplicated: false };
         }
-        const now = Date.now();
-        const word: Word = {
-          id: makeId(),
-          en,
-          zh,
-          phonetic: input.phonetic?.trim() ?? "",
-          pos: canonicalizePos(input.pos ?? ""),
-          exampleEn: input.exampleEn?.trim() ?? "",
-          exampleZh: input.exampleZh?.trim() ?? "",
-          note: input.note?.trim() ?? "",
-          tags: input.tags ?? [],
-          lesson: clampLesson(input.lesson ?? 0),
-          starred: false,
-          ease: 0,
-          intervalDays: 0,
-          nextReviewAt: 0,
-          reviewCount: 0,
-          correctCount: 0,
-          wrongCount: 0,
-          createdAt: now,
-          updatedAt: now,
-          source: input.source ?? "manual",
-        };
-        set((s) => ({ words: [word, ...s.words] }));
-        return { word, duplicated: false };
+        return last!;
       },
       importMany: (items) => {
         const ids: string[] = [];
@@ -117,18 +122,21 @@ export const useWordStore = create<WordState>()(
           const en = normalizeEn(input.en);
           const zh = input.zh.trim();
           if (!en || !zh) continue;
-          const existing = words.find((w) => w.en.toLowerCase() === en.toLowerCase());
+          for (const piece of expandByPos({ ...input, en, zh })) {
+          const existing = words.find(
+            (w) => entryKey(w.en, w.pos) === entryKey(piece.en, piece.pos ?? ""),
+          );
           if (existing) {
             words = words.map((w) =>
               w.id === existing.id
                 ? {
                     ...w,
-                    zh: mergeGloss(w.zh, zh),
-                    pos: formatPos([...parsePos(w.pos), ...parsePos(input.pos ?? "")]),
-                    phonetic: w.phonetic || input.phonetic?.trim() || "",
-                    exampleEn: w.exampleEn || input.exampleEn?.trim() || "",
-                    exampleZh: w.exampleZh || input.exampleZh?.trim() || "",
-                    lesson: w.lesson || clampLesson(input.lesson ?? 0),
+                    zh: mergeGloss(w.zh, piece.zh),
+                    pos: canonicalizePos(piece.pos ?? w.pos),
+                    phonetic: w.phonetic || piece.phonetic?.trim() || "",
+                    exampleEn: w.exampleEn || piece.exampleEn?.trim() || "",
+                    exampleZh: w.exampleZh || piece.exampleZh?.trim() || "",
+                    lesson: w.lesson || clampLesson(piece.lesson ?? 0),
                     updatedAt: Date.now(),
                   }
                 : w,
@@ -139,15 +147,15 @@ export const useWordStore = create<WordState>()(
             const now = Date.now();
             const word: Word = {
               id: makeId(),
-              en,
-              zh,
-              phonetic: input.phonetic?.trim() ?? "",
-              pos: canonicalizePos(input.pos ?? ""),
-              exampleEn: input.exampleEn?.trim() ?? "",
-              exampleZh: input.exampleZh?.trim() ?? "",
-              note: input.note?.trim() ?? "",
-              tags: input.tags ?? [],
-              lesson: clampLesson(input.lesson ?? 0),
+              en: piece.en,
+              zh: piece.zh,
+              phonetic: piece.phonetic?.trim() ?? "",
+              pos: canonicalizePos(piece.pos ?? ""),
+              exampleEn: piece.exampleEn?.trim() ?? "",
+              exampleZh: piece.exampleZh?.trim() ?? "",
+              note: piece.note?.trim() ?? "",
+              tags: piece.tags ?? [],
+              lesson: clampLesson(piece.lesson ?? 0),
               starred: false,
               ease: 0,
               intervalDays: 0,
@@ -157,11 +165,12 @@ export const useWordStore = create<WordState>()(
               wrongCount: 0,
               createdAt: now,
               updatedAt: now,
-              source: input.source ?? "manual",
+              source: piece.source ?? "manual",
             };
             words = [word, ...words];
             ids.push(word.id);
             added += 1;
+          }
           }
         }
         set((s) => ({
@@ -244,8 +253,10 @@ export const useWordStore = create<WordState>()(
         }));
       },
       restoreSeed: () => {
-        const existing = new Set(get().words.map((w) => w.en.toLowerCase()));
-        const missing = buildSeedWords().filter((w) => !existing.has(w.en.toLowerCase()));
+        const existing = new Set(get().words.map((w) => entryKey(w.en, w.pos)));
+        const missing = buildSeedWords().filter(
+          (w) => !existing.has(entryKey(w.en, w.pos)),
+        );
         if (missing.length) {
           set((s) => ({ words: [...missing, ...s.words] }));
         }
@@ -259,7 +270,9 @@ export const useWordStore = create<WordState>()(
       },
       hydrateCloud: (words, stats) => {
         set({
-          words: words.map((w) => ({ ...w, lesson: clampLesson(w.lesson ?? 0) })),
+          words: splitStoredWords(
+            words.map((w) => ({ ...w, lesson: clampLesson(w.lesson ?? 0) })),
+          ),
           stats,
         });
       },
@@ -275,10 +288,12 @@ export const useWordStore = create<WordState>()(
       }),
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<Pick<WordState, "words" | "stats">>;
-        const words = (p.words ?? current.words).map((w) => ({
-          ...w,
-          lesson: clampLesson(w.lesson ?? 0),
-        }));
+        const words = splitStoredWords(
+          (p.words ?? current.words).map((w) => ({
+            ...w,
+            lesson: clampLesson(w.lesson ?? 0),
+          })),
+        );
         return {
           ...current,
           ...p,
