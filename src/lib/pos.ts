@@ -1,6 +1,7 @@
 export const POS_OPTIONS = [
   { key: "n", abbr: "n.", zh: "名詞" },
   { key: "v", abbr: "v.", zh: "動詞" },
+  { key: "vp", abbr: "vp.", zh: "動詞片語" },
   { key: "adj", abbr: "adj.", zh: "形容詞" },
   { key: "adv", abbr: "adv.", zh: "副詞" },
   { key: "prep", abbr: "prep.", zh: "介系詞" },
@@ -27,6 +28,15 @@ const ALIAS: Record<string, PosKey> = {
   vb: "v",
   verb: "v",
   動詞: "v",
+  vp: "vp",
+  "vp.": "vp",
+  "v.p": "vp",
+  "v.p.": "vp",
+  "verb phrase": "vp",
+  verbphrase: "vp",
+  "verbal phrase": "vp",
+  動詞片語: "vp",
+  片語動詞: "vp",
   adj: "adj",
   "adj.": "adj",
   adjective: "adj",
@@ -65,7 +75,6 @@ const ALIAS: Record<string, PosKey> = {
   phrase: "phr",
   phrasal: "phr",
   片語: "phr",
-  片語動詞: "phr",
 };
 
 function matchToken(token: string): PosKey | null {
@@ -75,6 +84,8 @@ function matchToken(token: string): PosKey | null {
   if (direct) return direct;
   const compact = trimmed.toLowerCase().replace(/\s+/g, "");
   if (ALIAS[compact]) return ALIAS[compact];
+  const nodot = compact.replace(/\./g, "");
+  if (ALIAS[nodot]) return ALIAS[nodot];
   const abbr = compact.match(/^([a-z]+)\.?/);
   if (abbr?.[1] && ALIAS[abbr[1]]) return ALIAS[abbr[1]];
   const zh = trimmed.match(/[\u3400-\u9fff]+/g);

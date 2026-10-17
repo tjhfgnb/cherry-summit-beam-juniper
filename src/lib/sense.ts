@@ -1,7 +1,7 @@
 import { formatPos, parsePos } from "./pos";
 import type { Word } from "./types";
 
-const POS_ORDER = ["n", "v", "adj", "adv", "prep", "conj", "pron", "det", "int", "phr"];
+const POS_ORDER = ["n", "v", "vp", "adj", "adv", "prep", "conj", "pron", "det", "int", "phr"];
 
 export function posKey(pos: string): string {
   return parsePos(pos)[0] ?? "";

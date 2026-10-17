@@ -19,7 +19,8 @@ const POS_FROM_EN: Record<string, PosKey> = {
   phrase: "phr",
   proverb: "phr",
   idiom: "phr",
-  "phrasal verb": "phr",
+  "phrasal verb": "vp",
+  "verb phrase": "vp",
 };
 
 const CACHE_KEY = "yingxiben-lookup-v2";
