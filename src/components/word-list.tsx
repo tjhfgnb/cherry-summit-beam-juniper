@@ -55,6 +55,7 @@ export function WordList({
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [confirmBulk, setConfirmBulk] = useState(false);
   const [confirmLesson, setConfirmLesson] = useState<string | null>(null);
+  const [selecting, setSelecting] = useState(false);
 
   useEffect(() => {
     setConfirmBulk(false);
@@ -107,6 +108,7 @@ export function WordList({
 
   function pick(id: string) {
     return (e: PointerEvent<HTMLButtonElement>) => {
+      if (!selecting) return;
       if (e.pointerType === "mouse" && e.button !== 0) return;
       e.preventDefault();
       toggleSelected(id);
@@ -170,6 +172,19 @@ export function WordList({
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          aria-pressed={selecting}
+          onClick={() => setSelecting((on) => !on)}
+          className={cn(
+            "h-9 rounded-full px-3 text-sm font-medium transition-colors duration-150",
+            selecting
+              ? "bg-accent text-accent-fg"
+              : "bg-surface text-ink shadow-card hover:bg-surface-2",
+          )}
+        >
+          {selecting ? "圈選中" : "圈選"}
+        </button>
         {chips.map((chip) => (
           <button
             key={chip.id}
@@ -185,7 +200,7 @@ export function WordList({
             {chip.label}
           </button>
         ))}
-        {filtered.length > 0 ? (
+        {selecting && filtered.length > 0 ? (
           <button
             type="button"
             onClick={() => {
@@ -233,7 +248,7 @@ export function WordList({
 
       {filtered.length === 0 ? (
         <p className="mt-8 text-center text-sm text-muted">
-          {filter === "picked" ? "還沒圈選單字。點一列即可。" : "沒有符合的單字。"}
+          {filter === "picked" ? "還沒圈選單字。先按「圈選」。" : "沒有符合的單字。"}
         </p>
       ) : (
         <div className="mt-4 space-y-5">
@@ -248,6 +263,7 @@ export function WordList({
                     </span>
                   </h2>
                   <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+                  {selecting ? (
                   <button
                     type="button"
                     className="h-9 rounded-full px-3 text-sm font-medium text-accent hover:bg-accent-soft/70"
@@ -264,6 +280,7 @@ export function WordList({
                   >
                     {section.items.every((w) => selectedSet.has(w.id)) ? "取消本課" : "圈選本課"}
                   </button>
+                  ) : null}
                   {confirmLesson === section.key ? (
                     <button
                       type="button"
@@ -303,6 +320,7 @@ export function WordList({
                         )}
                       >
                         <div className="flex items-stretch">
+                          {selecting ? (
                           <button
                             type="button"
                             aria-pressed={picked}
@@ -312,11 +330,20 @@ export function WordList({
                           >
                             <SelectCircle selected={picked} />
                           </button>
+                          ) : null}
                           <button
                             type="button"
-                            aria-pressed={picked}
-                            onPointerDown={pick(word.id)}
-                            className="flex min-w-0 flex-1 items-center py-3 pr-1 text-left select-none active:bg-accent-soft/40"
+                            aria-pressed={selecting ? picked : open}
+                            onPointerDown={selecting ? pick(word.id) : undefined}
+                            onClick={
+                              selecting
+                                ? undefined
+                                : () => setOpenId(open ? null : word.id)
+                            }
+                            className={cn(
+                              "flex min-w-0 flex-1 items-center py-3 pr-1 text-left select-none active:bg-accent-soft/40",
+                              !selecting && "pl-4",
+                            )}
                           >
                             <span className="flex w-full min-w-0 items-start justify-between gap-3">
                               <span className="min-w-0">
