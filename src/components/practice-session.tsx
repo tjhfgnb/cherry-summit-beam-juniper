@@ -72,9 +72,9 @@ export function PracticeSession({
   const [selected, setSelected] = useState<string | null>(null);
   const [typed, setTyped] = useState("");
   const [checked, setChecked] = useState(false);
+  const [revealed, setRevealed] = useState(false);
   const [missed, setMissed] = useState<Word[]>([]);
   const [done, setDone] = useState(false);
-  const timerRef = useRef<number | null>(null);
 
   const word = deck[index];
   const options = useMemo(
@@ -90,16 +90,21 @@ export function PracticeSession({
     markPracticedToday();
   }, [deck.length, markPracticedToday]);
 
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) window.clearTimeout(timerRef.current);
-    };
-  }, []);
-
   function grade(quality: Quality, miss = quality === 0) {
     if (!word) return;
     recordReview(word.id, quality);
     if (miss) setMissed((m) => [...m, word]);
+    advance();
+  }
+
+  function reveal(ok: boolean) {
+    if (!word || revealed) return;
+    recordReview(word.id, ok ? 2 : 0);
+    if (!ok) setMissed((m) => [...m, word]);
+    setRevealed(true);
+  }
+
+  function advance() {
     if (index + 1 >= deck.length) {
       setDone(true);
       return;
@@ -109,6 +114,7 @@ export function PracticeSession({
     setSelected(null);
     setTyped("");
     setChecked(false);
+    setRevealed(false);
   }
 
   const gradeRef = useRef(grade);
@@ -215,11 +221,9 @@ export function PracticeSession({
             options={options}
             selected={selected}
             onSelect={(choice) => {
-              if (selected) return;
+              if (selected || revealed) return;
               setSelected(choice);
-              const ok = choice === answer;
-              if (timerRef.current) window.clearTimeout(timerRef.current);
-              timerRef.current = window.setTimeout(() => grade(ok ? 2 : 0, !ok), 280);
+              reveal(choice === answer);
             }}
           />
         </div>
@@ -233,16 +237,74 @@ export function PracticeSession({
             checked={checked}
             onTyped={setTyped}
             onCheck={() => {
+              if (revealed) return;
               const ok = typed.trim().toLowerCase() === word.en.toLowerCase();
               setChecked(true);
-              if (timerRef.current) window.clearTimeout(timerRef.current);
-              timerRef.current = window.setTimeout(() => grade(ok ? 2 : 0, !ok), ok ? 320 : 700);
+              reveal(ok);
             }}
           />
         </div>
       ) : null}
+
+      {mode !== "flash" && revealed ? (
+        <AnswerNote
+          word={word}
+          answer={answer}
+          direction={direction}
+          picked={mode === "quiz" ? selected : typed}
+          last={index + 1 >= deck.length}
+          onNext={advance}
+        />
+      ) : null}
     </div>
   );
+}
+
+function AnswerNote({
+  word,
+  answer,
+  direction,
+  picked,
+  last,
+  onNext,
+}: {
+  word: Word;
+  answer: string;
+  direction: Direction;
+  picked: string | null;
+  last: boolean;
+  onNext: () => void;
+}) {
+  const mine = picked?.trim() ?? "";
+  const ok = mine.toLowerCase() === answer.trim().toLowerCase();
+  const why = explainAnswer(word, direction);
+
+  return (
+    <div className="mt-4 rounded-xl bg-surface px-5 py-5 shadow-card">
+      <p className="text-xs uppercase tracking-widest text-faint">正確答案</p>
+      <p className="mt-1 font-display text-2xl font-semibold tracking-tight">{answer}</p>
+      <p className={cn("mt-3 text-sm", ok ? "text-ok" : "text-danger")}>
+        {ok ? "你答對了。" : mine ? `你選的是「${mine}」，不是這個意思。` : "這題不對。"}
+      </p>
+      <p className="mt-2 text-sm leading-relaxed text-ink-soft">{why}</p>
+      <Button type="button" className="mt-4 w-full" onClick={onNext}>
+        {last ? "看結果" : "下一題"}
+      </Button>
+    </div>
+  );
+}
+
+function explainAnswer(word: Word, direction: Direction) {
+  const pos = word.pos ? `，詞性是${word.pos}` : "";
+  const meaning =
+    direction === "en-zh"
+      ? `「${word.en}」的中文是「${word.zh}」${pos}。`
+      : `「${word.zh}」要寫成「${word.en}」${pos}。`;
+  const example = word.exampleEn
+    ? ` 例句：${word.exampleEn}${word.exampleZh ? `（${word.exampleZh}）` : ""}。`
+    : "";
+  const note = word.note?.trim() ? ` ${word.note.trim()}` : "";
+  return `${meaning}${example}${note} 所以正確答案是「${direction === "en-zh" ? word.zh : word.en}」。`;
 }
 
 function EmptyPractice({ onExit }: { onExit: () => void }) {
