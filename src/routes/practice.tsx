@@ -10,18 +10,16 @@ export const Route = createFileRoute("/practice")({ component: PracticePage });
 
 function PracticePage() {
   const [session, setSession] = useState<StartOpts | null>(null);
-  const [run, setRun] = useState(0);
 
   if (session) {
     return (
       <PracticeSession
-        key={`${run}-${session.mode}-${session.wordIds?.join(",") ?? session.count}`}
+        key={`${session.mode}-${session.direction}-${session.wordIds?.join(",") ?? session.count}`}
         mode={session.mode}
         direction={session.direction}
         count={session.count}
         wordIds={session.wordIds}
         onExit={() => setSession(null)}
-        onAgain={() => setRun((n) => n + 1)}
       />
     );
   }

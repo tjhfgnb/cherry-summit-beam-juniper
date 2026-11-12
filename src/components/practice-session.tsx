@@ -52,14 +52,12 @@ export function PracticeSession({
   count,
   wordIds,
   onExit,
-  onAgain,
 }: {
   mode: PracticeMode;
   direction: Direction;
   count: number;
   wordIds?: string[];
   onExit: () => void;
-  onAgain: () => void;
 }) {
   const recordReview = useWordStore((s) => s.recordReview);
   const markPracticedToday = useWordStore((s) => s.markPracticedToday);
@@ -102,6 +100,17 @@ export function PracticeSession({
     recordReview(word.id, ok ? 2 : 0);
     if (!ok) setMissed((m) => [...m, word]);
     setRevealed(true);
+  }
+
+  function replay() {
+    setIndex(0);
+    setFlipped(false);
+    setSelected(null);
+    setTyped("");
+    setChecked(false);
+    setRevealed(false);
+    setMissed([]);
+    setDone(false);
   }
 
   function advance() {
@@ -163,7 +172,7 @@ export function PracticeSession({
           <p className="mt-6 text-sm text-ok">這一輪都很穩。</p>
         )}
         <div className="mt-8 flex flex-col justify-center gap-2 sm:flex-row">
-          <Button onClick={onAgain}>再練一次</Button>
+          <Button onClick={replay}>再考同樣的題目</Button>
           <Button variant="secondary" onClick={onExit}>
             回練習
           </Button>
