@@ -98,7 +98,6 @@ export async function loadWordbookData(userId: string): Promise<WordbookSnapshot
 export async function saveWordbookData(userId: string, data: WordbookSnapshot) {
   const { getSql } = await import("@/lib/db");
   const sql = await getSql();
-  await sql`delete from words where user_id = ${userId}`;
   for (const word of data.words) {
     await sql`
       insert into words (
@@ -113,7 +112,33 @@ export async function saveWordbookData(userId: string, data: WordbookSnapshot) {
         ${word.correctCount}, ${word.wrongCount}, ${word.createdAt},
         ${word.updatedAt}, ${word.source}
       )
+      on conflict (user_id, id) do update set
+        en = excluded.en,
+        zh = excluded.zh,
+        phonetic = excluded.phonetic,
+        pos = excluded.pos,
+        example_en = excluded.example_en,
+        example_zh = excluded.example_zh,
+        note = excluded.note,
+        tags = excluded.tags,
+        lesson = excluded.lesson,
+        starred = excluded.starred,
+        ease = excluded.ease,
+        interval_days = excluded.interval_days,
+        next_review_at = excluded.next_review_at,
+        review_count = excluded.review_count,
+        correct_count = excluded.correct_count,
+        wrong_count = excluded.wrong_count,
+        created_at = excluded.created_at,
+        updated_at = excluded.updated_at,
+        source = excluded.source
     `;
+  }
+  const ids = data.words.map((word) => word.id);
+  if (ids.length === 0) {
+    await sql`delete from words where user_id = ${userId}`;
+  } else {
+    await sql`delete from words where user_id = ${userId} and not (id = any(${ids}))`;
   }
   await sql`
     insert into practice_stats (user_id, streak, last_practice_date, total_reviews, updated_at)

@@ -53,7 +53,7 @@ export function splitStoredWords(words: Word[]): Word[] {
   }
   const seen = new Set<string>();
   return out.filter((word) => {
-    const key = entryKey(word.en, word.pos);
+    const key = `${entryKey(word.en, word.pos)}|${word.zh.trim()}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;

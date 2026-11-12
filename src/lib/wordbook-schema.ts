@@ -30,7 +30,7 @@ const statsSchema = z.object({
 });
 
 export const snapshotSchema = z.object({
-  words: z.array(wordSchema).max(500),
+  words: z.array(wordSchema).max(8000),
   stats: statsSchema,
 });
 
