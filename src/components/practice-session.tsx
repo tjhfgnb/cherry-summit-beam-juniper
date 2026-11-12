@@ -570,7 +570,19 @@ export function PracticeIntro({
   const poolWords =
     pool === "selected" ? selectedWords : pool === "due" ? dueWords : words;
   const size = Math.min(count, Math.max(poolWords.length, 1));
-  const poolIds = poolWords.map((w) => w.id);
+
+  function startRandom50() {
+    if (words.length === 0) return;
+    const n = Math.min(50, words.length);
+    onStart({
+      mode: mode === "flash" ? "quiz" : mode,
+      direction: mode === "spell" ? "zh-en" : direction,
+      count: n,
+      wordIds: shuffle(words)
+        .slice(0, n)
+        .map((word) => word.id),
+    });
+  }
 
   function start() {
     if (poolWords.length === 0) return;
@@ -578,7 +590,9 @@ export function PracticeIntro({
       mode,
       direction: mode === "spell" ? "zh-en" : direction,
       count: size,
-      wordIds: poolIds.slice(0, size),
+      wordIds: shuffle(poolWords)
+        .slice(0, size)
+        .map((word) => word.id),
     });
   }
 
@@ -709,8 +723,8 @@ export function PracticeIntro({
             <div className="mt-5">
               <p className="text-sm font-medium text-ink-soft">題數</p>
               <div className="mt-2 flex flex-wrap gap-2">
-                {[5, 10, 15, poolWords.length]
-                  .filter((n, i, arr) => n > 0 && arr.indexOf(n) === i)
+                {[5, 10, 15, 50, poolWords.length]
+                  .filter((n, i, arr) => n > 0 && n <= poolWords.length && arr.indexOf(n) === i)
                   .map((n) => (
                     <button
                       key={n}
@@ -729,10 +743,19 @@ export function PracticeIntro({
           )}
 
           <div className="pointer-events-none fixed inset-x-0 bottom-20 z-40 border-t border-line bg-bg/95 px-4 py-3 backdrop-blur-sm md:bottom-0 md:left-56">
-            <div className="pointer-events-auto mx-auto max-w-3xl">
+            <div className="pointer-events-auto mx-auto flex max-w-3xl flex-col gap-2">
               <Button
                 className="w-full"
                 size="lg"
+                disabled={words.length === 0}
+                onClick={startRandom50}
+              >
+                隨機抽考 {Math.min(50, words.length)} 個
+              </Button>
+              <Button
+                className="w-full"
+                size="lg"
+                variant="secondary"
                 disabled={poolWords.length === 0}
                 onClick={start}
               >
