@@ -1,4 +1,4 @@
-import { formatPos, parsePos } from "./pos";
+import { formatPos, parsePos, separatePos } from "./pos";
 import type { Word } from "./types";
 
 const POS_ORDER = ["n", "v", "vp", "adj", "adv", "prep", "conj", "pron", "det", "int", "phr"];
@@ -36,15 +36,25 @@ export function expandByPos<T extends { zh: string; pos?: string }>(item: T): T[
 export function splitStoredWords(words: Word[]): Word[] {
   const out: Word[] = [];
   for (const word of words) {
-    const keys = parsePos(word.pos);
+    const peeled = separatePos(word.en);
+    const en = peeled.text || word.en;
+    const keys = [...parsePos(word.pos)];
+    for (const key of peeled.keys) {
+      if (!keys.includes(key)) keys.push(key);
+    }
     if (keys.length <= 1) {
-      out.push(word);
+      out.push({
+        ...word,
+        en,
+        pos: keys.length ? formatPos(keys) : word.pos,
+      });
       continue;
     }
     const glosses = splitGloss(word.zh, keys.length);
     keys.forEach((key, i) => {
       out.push({
         ...word,
+        en,
         id: i === 0 ? word.id : `${word.id}-${key}`,
         pos: formatPos([key]),
         zh: glosses[i] ?? word.zh,

@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PosPicker } from "@/components/pos";
 import { LessonPicker } from "@/components/lesson-picker";
 import { lookupPhrase } from "@/lib/lookup";
-import { canonicalizePos } from "@/lib/pos";
+import { canonicalizePos, formatPos, separatePos } from "@/lib/pos";
 import { useWordStore } from "@/lib/store";
 import type { Word } from "@/lib/types";
 
@@ -89,7 +89,8 @@ export function AddWordDialog({
   }
 
   async function onLookup() {
-    const text = draft.en.trim() || draft.zh.trim();
+    const peeled = separatePos(draft.en);
+    const text = (peeled.text || draft.en).trim() || draft.zh.trim();
     if (!text) {
       toast("先填英文或中文，再按翻譯");
       return;
@@ -97,15 +98,15 @@ export function AddWordDialog({
     setLooking(true);
     try {
       const result = await lookupPhrase({
-        data: { text, hint: detectHint(draft.en, draft.zh) },
+        data: { text, hint: detectHint(peeled.text || draft.en, draft.zh) },
         onPartial: (partial) => {
           const isEnSource = partial.sourceLang === "en";
           setDraft((d) => ({
             ...d,
-            en: isEnSource ? partial.source : partial.translation,
+            en: isEnSource ? peeled.text || partial.source : partial.translation,
             zh: isEnSource ? partial.translation : partial.source,
             phonetic: partial.phonetic || d.phonetic,
-            pos: canonicalizePos(partial.pos) || d.pos,
+            pos: canonicalizePos(partial.pos) || formatPos(peeled.keys) || d.pos,
             exampleEn: partial.examples[0]?.en || d.exampleEn,
             exampleZh: partial.examples[0]?.zh || d.exampleZh,
           }));
@@ -119,10 +120,10 @@ export function AddWordDialog({
       const isEnSource = result.sourceLang === "en";
       setDraft((d) => ({
         ...d,
-        en: isEnSource ? result.source : result.translation,
+        en: isEnSource ? peeled.text || result.source : result.translation,
         zh: isEnSource ? result.translation : result.source,
         phonetic: result.phonetic || d.phonetic,
-        pos: canonicalizePos(result.pos) || d.pos,
+        pos: canonicalizePos(result.pos) || formatPos(peeled.keys) || d.pos,
         exampleEn: result.examples[0]?.en || d.exampleEn,
         exampleZh: result.examples[0]?.zh || d.exampleZh,
       }));

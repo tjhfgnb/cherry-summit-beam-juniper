@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { Languages, LoaderCircle, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatPos, separatePos } from "@/lib/pos";
 import { lookupPhrase } from "@/lib/lookup";
 import { formatLesson } from "@/lib/lesson";
 import { useWordStore } from "@/lib/store";
@@ -32,18 +33,20 @@ export function QuickAdd({
       onManual();
       return;
     }
+    const peeled = separatePos(value);
+    const query = peeled.text || value;
     setLoading(true);
     try {
       let savedId: string | null = null;
       const result = await lookupPhrase({
-        data: { text: value, hint: hasCjk(value) ? "zh" : "en" },
+        data: { text: query, hint: hasCjk(query) ? "zh" : "en" },
         onPartial: (partial) => {
           const isEn = partial.sourceLang === "en";
           const payload = {
-            en: isEn ? partial.source : partial.translation,
+            en: isEn ? peeled.text || partial.source : partial.translation,
             zh: isEn ? partial.translation : partial.source,
             phonetic: partial.phonetic,
-            pos: partial.pos,
+            pos: partial.pos || formatPos(peeled.keys),
             exampleEn: partial.examples[0]?.en,
             exampleZh: partial.examples[0]?.zh,
             source: "translate" as const,

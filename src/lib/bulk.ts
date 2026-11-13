@@ -1,4 +1,4 @@
-import { formatPos, parsePos, type PosKey } from "./pos";
+import { formatPos, separatePos, type PosKey } from "./pos";
 import { clampLesson, parseLessonHeader, stripInlineLesson } from "./lesson";
 
 export type BulkGroup = {
@@ -39,19 +39,8 @@ function normalizeEn(value: string) {
 }
 
 function pullPos(line: string): { rest: string; keys: PosKey[] } {
-  const keys: PosKey[] = [];
-  const rest = line
-    .replace(/[（(]([^）)]*)[）)]/g, (_, inner: string) => {
-      const found = parsePos(String(inner));
-      if (found.length) {
-        keys.push(...found);
-        return " ";
-      }
-      return `(${inner})`;
-    })
-    .replace(/\s+/g, " ")
-    .trim();
-  return { rest, keys: uniquePos(keys) };
+  const peeled = separatePos(line);
+  return { rest: peeled.text, keys: peeled.keys };
 }
 
 function splitEnZh(rest: string): { en: string; zh: string } {

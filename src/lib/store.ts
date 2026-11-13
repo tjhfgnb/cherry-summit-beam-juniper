@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { canonicalizePos } from "./pos";
+import { canonicalizePos, formatPos, parsePos, separatePos } from "./pos";
 import { mergeGloss } from "./bulk";
 import { clampLesson } from "./lesson";
 import { entryKey, expandByPos, splitStoredWords } from "./sense";
@@ -33,6 +33,16 @@ function normalizeEn(value: string) {
   return value.trim().replace(/\s+/g, " ");
 }
 
+function withPosPulledOut(input: NewWordInput): NewWordInput {
+  const peeled = separatePos(input.en);
+  if (!peeled.text || peeled.keys.length === 0) return input;
+  const keys = [...parsePos(input.pos ?? "")];
+  for (const key of peeled.keys) {
+    if (!keys.includes(key)) keys.push(key);
+  }
+  return { ...input, en: peeled.text, pos: formatPos(keys) };
+}
+
 function makeId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
@@ -62,10 +72,11 @@ export const useWordStore = create<WordState>()(
       stats: emptyStats,
       selectedIds: [],
       addWord: (input) => {
+        const cleaned = withPosPulledOut(input);
         const pieces = expandByPos({
-          ...input,
-          en: normalizeEn(input.en),
-          zh: input.zh.trim(),
+          ...cleaned,
+          en: normalizeEn(cleaned.en),
+          zh: cleaned.zh.trim(),
         }).filter((item) => item.en && item.zh);
         if (!pieces.length) throw new Error("需要英文與中文");
         let last: AddResult | null = null;
@@ -119,10 +130,11 @@ export const useWordStore = create<WordState>()(
         let merged = 0;
         let words = get().words;
         for (const input of items) {
-          const en = normalizeEn(input.en);
-          const zh = input.zh.trim();
+          const cleaned = withPosPulledOut(input);
+          const en = normalizeEn(cleaned.en);
+          const zh = cleaned.zh.trim();
           if (!en || !zh) continue;
-          for (const piece of expandByPos({ ...input, en, zh })) {
+          for (const piece of expandByPos({ ...cleaned, en, zh })) {
           const existing = words.find(
             (w) => entryKey(w.en, w.pos) === entryKey(piece.en, piece.pos ?? ""),
           );
@@ -180,10 +192,22 @@ export const useWordStore = create<WordState>()(
         return { added, merged, ids };
       },
       updateWord: (id, patch) => {
-        const next =
-          patch.pos !== undefined
-            ? { ...patch, pos: canonicalizePos(patch.pos) }
-            : patch;
+        const current = get().words.find((word) => word.id === id);
+        let next = { ...patch };
+        if (next.en) {
+          const peeled = separatePos(next.en);
+          if (peeled.text && peeled.keys.length) {
+            next = { ...next, en: peeled.text };
+            const keys = [...parsePos(next.pos ?? current?.pos ?? "")];
+            for (const key of peeled.keys) {
+              if (!keys.includes(key)) keys.push(key);
+            }
+            next.pos = formatPos(keys);
+          }
+        }
+        if (next.pos !== undefined) {
+          next = { ...next, pos: canonicalizePos(next.pos) };
+        }
         const withLesson =
           next.lesson !== undefined ? { ...next, lesson: clampLesson(next.lesson) } : next;
         set((s) => ({

@@ -26,6 +26,14 @@ const ALIAS: Record<string, PosKey> = {
   v: "v",
   "v.": "v",
   vb: "v",
+  vt: "v",
+  "vt.": "v",
+  "v.t": "v",
+  "v.t.": "v",
+  vi: "v",
+  "vi.": "v",
+  "v.i": "v",
+  "v.i.": "v",
   verb: "v",
   動詞: "v",
   vp: "vp",
@@ -119,6 +127,82 @@ export function formatPos(keys: PosKey[]): string {
 export function canonicalizePos(raw: string): string {
   const keys = parsePos(raw);
   return keys.length ? formatPos(keys) : raw.trim();
+}
+
+const SHORT_POS: Record<string, PosKey> = {
+  n: "n",
+  v: "v",
+  vb: "v",
+  vt: "v",
+  vi: "v",
+  vp: "vp",
+  adj: "adj",
+  adv: "adv",
+  prep: "prep",
+  conj: "conj",
+  pron: "pron",
+  det: "det",
+  int: "int",
+  phr: "phr",
+};
+
+function abbrKey(token: string): PosKey | null {
+  const nodot = token.trim().toLowerCase().replace(/\./g, "");
+  return SHORT_POS[nodot] ?? null;
+}
+
+function uniqueKeys(keys: PosKey[]): PosKey[] {
+  const out: PosKey[] = [];
+  for (const key of keys) {
+    if (!out.includes(key)) out.push(key);
+  }
+  return out;
+}
+
+/** Pull a part-of-speech mark out of a word, so `apple (n.)` stays `apple`. */
+export function separatePos(raw: string): { text: string; keys: PosKey[] } {
+  const keys: PosKey[] = [];
+  const text = raw.replace(/[（(\[【［]([^）)\]】］]*)[）)\]】］]/g, (full, inner: string) => {
+    const found = parsePos(String(inner));
+    if (!found.length) return full;
+    const leftover = String(inner)
+      .split(/[／/、,;+|.\s]+/)
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .filter((part) => !abbrKey(part) && parsePos(part).length === 0);
+    if (leftover.length) return full;
+    keys.push(...found);
+    return " ";
+  });
+
+  const kept: string[] = [];
+  for (const token of text.split(/\s+/)) {
+    if (!token) continue;
+    const bare = token.replace(/^[.,;；、|/／:：]+|[.,;；、|/／:：]+$/g, "");
+    const pieces = bare.split(/[/／+|]+/).filter(Boolean);
+    if (pieces.length > 0 && pieces.every((part) => abbrKey(part))) {
+      for (const part of pieces) {
+        const key = abbrKey(part);
+        if (key) keys.push(key);
+      }
+      continue;
+    }
+    const glued = bare.match(
+      /^(n|vt|vi|vb|vp|v|adj|adv|prep|conj|pron|det|int|phr)\.(?=\p{Script=Han})(.*)$/iu,
+    );
+    if (glued?.[1] && glued[2]) {
+      const key = abbrKey(glued[1]);
+      if (key) keys.push(key);
+      kept.push(glued[2]);
+      continue;
+    }
+    kept.push(token);
+  }
+
+  return {
+    text: kept.join(" ").replace(/\s+/g, " ").trim(),
+    keys: uniqueKeys(keys),
+  };
 }
 
 export function togglePosKey(raw: string, key: PosKey): string {
